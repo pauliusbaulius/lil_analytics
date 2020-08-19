@@ -12,10 +12,10 @@ bot_token = ""
 invite_link = "https://discordapp.com/oauth2/authorize-client_id=672865567329353778&permissions=8&scope=bot"
 
 # Your discord id. This is needed for certain commands meant to be used by the owner only!
-sudoer = 0
+sudoer = None
 
 # Bot id to check whether bot is this bot.
-bot_id = 0
+bot_id = None
 
 # Directory definitions. You can leave those like this.
 database = "data/databases/data.db"
