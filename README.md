@@ -83,9 +83,6 @@ Commands generate compilation of statistics and send one embed together with add
 .gdpr
 	Delete all your messages in channel where command was called.
 	Takes a long time.
-	
-.mute 
-	TODO
 ```
 
 
