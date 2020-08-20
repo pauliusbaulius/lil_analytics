@@ -4,6 +4,7 @@ import sqlite3
 
 import discord
 
+from src.decorators import timer
 from src.utils import get_database
 
 
@@ -13,6 +14,7 @@ from src.utils import get_database
 """
 
 
+@timer
 async def add_message(message: discord.Message):
     """Given a message object, inserts relevant data into the database."""
     with sqlite3.connect(get_database()) as cn:
@@ -43,7 +45,7 @@ async def add_message(message: discord.Message):
         await add_message_metadata(message.id, message.mentions, message.channel_mentions, message.role_mentions,
                                    message.reactions)
 
-
+@timer
 async def add_message_metadata(message_id: int, user_mentions: list, channel_mentions: list, role_mentions: list,
                                reactions):
     """Inserts message metadata into database. Deletes old metadata first to
@@ -78,7 +80,7 @@ async def add_message_metadata(message_id: int, user_mentions: list, channel_men
     for reaction in reactions:
         await add_reactions(reaction)
 
-
+@timer
 async def message_bulk_delete(message_ids: list):
     """Given a list of message ids, deletes those messages in the database.
 
@@ -97,7 +99,7 @@ async def message_bulk_delete(message_ids: list):
                 c.execute('DELETE FROM messages WHERE id == ?', (message_id.id,))
         cn.commit()
 
-
+@timer
 async def message_delete(message_id: int):
     """Give a single message id, it is removed from the database.
 
@@ -110,7 +112,7 @@ async def message_delete(message_id: int):
         c.execute('DELETE FROM messages WHERE id == ?', (message_id,))
         cn.commit()
 
-
+@timer
 async def message_update(message: discord.Message = None, message_raw: discord.RawMessageUpdateEvent = None):
     """Given a normal discord message or raw message update event, updates
     message metadata in the datbase."""
@@ -150,7 +152,7 @@ async def message_update(message: discord.Message = None, message_raw: discord.R
             # RawMessageUpdateEvent also triggered when you post image or url in embeds, need to ignore that.
             pass
 
-
+@timer
 async def add_reactions(reaction: discord.Reaction):
     """Given reaction object, adds relevant data to the database."""
     values = [(reaction.message.id, str(reaction.emoji), user.id, hash(str(reaction.emoji)))
@@ -165,7 +167,7 @@ async def add_reactions(reaction: discord.Reaction):
         c.executemany('INSERT INTO message_reactions VALUES (?, ?, ?, ?)', values)
         cn.commit()
 
-
+@timer
 async def add_reaction_raw(message_id: int, reaction_id, reacted_id: int):
     """Given message, reaction and user which reacted ids, creates an entry in
     the database."""
@@ -175,11 +177,11 @@ async def add_reaction_raw(message_id: int, reaction_id, reacted_id: int):
                                                                                   reacted_id, hash(str(reaction_id))))
         cn.commit()
 
-
+@timer
 async def add_reaction(reaction: discord.Reaction, reacted_id: int):
     await add_reaction_raw(reaction.message.id, reaction.emoji, reacted_id)
 
-
+@timer
 async def remove_reaction_raw(message_id: int, reaction_id, reacted_id: int):
     """Given a message id and other data needed to construct a key, deletes
     reactions from database matching the key."""
@@ -189,11 +191,11 @@ async def remove_reaction_raw(message_id: int, reaction_id, reacted_id: int):
                   (message_id, str(reaction_id), reacted_id))
         cn.commit()
 
-
+@timer
 async def remove_reaction(reaction: discord.Reaction, reacted_id: int):
     await remove_reaction_raw(reaction.message.id, reaction.emoji, reacted_id)
 
-
+@timer
 async def reaction_clear(message: discord.Message, reactions):
     # TODO delete reactions for that message
     print('db_reactions_clear', message, reactions)
@@ -204,7 +206,7 @@ async def reaction_clear(message: discord.Message, reactions):
                   (message_id,))
         cn.commit()
 
-
+@timer
 async def reaction_clear_raw(payload: discord.RawReactionClearEvent):
     # TODO delete reactions for that message
     print('db_reactions_clear_raw', payload)
@@ -215,7 +217,7 @@ async def reaction_clear_raw(payload: discord.RawReactionClearEvent):
                   (message_id,))
         cn.commit()
 
-
+@timer
 async def background_parse_history(client: discord.Client, guild_id: int):
     """Goes over all channels and parses yet non-parsed messages."""
     # TODO log this function to file: channel: time taken with guild_id and channel info!
@@ -229,7 +231,7 @@ async def background_parse_history(client: discord.Client, guild_id: int):
         print(f"parsed {channel.name}")
     return messages, ' '.join(channels)
 
-
+@timer
 async def _parse_channel_history(channel: discord.TextChannel) -> int:
     message_counter = 0
     async for message in channel.history(limit=None, oldest_first=True):
@@ -237,7 +239,7 @@ async def _parse_channel_history(channel: discord.TextChannel) -> int:
         message_counter += 1
     return message_counter
 
-
+@timer
 def add_reply(text: str):
     """Adds a new reply to bot_replies for bot to use.
 
@@ -250,7 +252,7 @@ def add_reply(text: str):
         cursor.execute('INSERT INTO bot_replies VALUES (?, ?)', (text, now))
         cn.commit()
 
-
+@timer
 def get_reply() -> str:
     """Returns a random reply from bot_replies if there are any, otherwise it returns None.
 

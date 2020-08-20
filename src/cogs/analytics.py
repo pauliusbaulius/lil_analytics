@@ -143,7 +143,7 @@ def _server(tz: int, guild):
     time = "It took me {:.2f} seconds to complete this function.".format(end - start)
 
     # Delete image, it is open in memory and will be still sent!
-    os.remove(image_path)
+    #os.remove(image_path)
 
     return embed, file, time
 
@@ -213,7 +213,7 @@ def _channel(tz: int, channel: discord.TextChannel, guild: discord.Guild):
     time = "It took me {:.2f} seconds to complete this function.".format(end - start)
 
     # Delete image, it is open in memory and will be still sent!
-    os.remove(image_path)
+    #os.remove(image_path)
 
     return embed, file, time
 
@@ -276,7 +276,7 @@ def _user(gid, tz: int, member: discord.Member):
     time = "It took me {:.2f} seconds to complete this function.".format(end - start)
 
     # Delete image, it is open in memory and will be still sent!
-    os.remove(image_path)
+    #os.remove(image_path)
 
     return embed, file, time
 

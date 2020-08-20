@@ -1,4 +1,5 @@
 import datetime
+import io
 import json
 import os
 import random
@@ -68,6 +69,7 @@ def get_database() -> "path to database":
     return os.path.join(definitions.root_dir, definitions.database)
 
 
+@timer
 def pillow_join_images(images: list, direction='horizontal', bg_color=(255, 255, 255), alignment='center'):
     """Appends images in horizontal/vertical direction.
 
@@ -114,16 +116,14 @@ def pillow_join_images(images: list, direction='horizontal', bg_color=(255, 255,
             img.paste(im, (x, offset))
             offset += im.size[1]
 
-    image_path = generate_graph_path_filename()
-    img.save(image_path)
-
-    # Delete image after joining!
-    for img in images:
-        os.remove(img)
-
+    #image_path = generate_graph_path_filename()
+    image_path = io.BytesIO()
+    img.save(image_path, format="png")
+    image_path.seek(0)
     return image_path
 
 
+@timer
 def pillow_add_margin(image_path: str, top: int, right: int, bottom: int, left: int, color=(255, 255, 255)):
     """Add margins to a given image.
 
@@ -135,7 +135,7 @@ def pillow_add_margin(image_path: str, top: int, right: int, bottom: int, left: 
     new_height = height + top + bottom
     img = Image.new(image.mode, (new_width, new_height), color)
     img.paste(image, (left, top))
-    img.save(image_path)
+    img.save(image_path, format="png")
     return image_path
 
 

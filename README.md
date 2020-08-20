@@ -1,12 +1,7 @@
 # lil analytics :robot:
 Discord bot for server/user/channel analytics. Gathers message metadata and generates Matplotlib graphs.
-
 **Does not collect content of the messages!** You can find data that is collected in ddl.py module. It contains the database schema.
-
 If you will run this bot from source, make sure to use `.index` first, to index your whole server. Parsing history takes a long time, and really depends on your hardware. Raspberry Pi Zero will work for a small server. Anything bigger requires better CPU.
-
-
-
 Commands generate compilation of statistics and send one embed together with additional stats:
 
 ![server](data/media/readme/serverinfo.png)
@@ -35,6 +30,7 @@ Commands generate compilation of statistics and send one embed together with add
 	Timezone is optional, default is UTC time.
 
 
+# Not implemented yet!
 .userchannel usermention channelmention (timezone)
 .userchannel @joe #nsfw
 	Show statistics for mentioned user for a specific channel.
@@ -125,19 +121,17 @@ Commands that can only be executed by the person who has the *sudo* rights in th
 ## Structure
 
 - All logs are saved data/logs/ directory. Logs are rotated daily, but old logs are not deleted.
-- There is one database called data in databases/ directory. You can modify this in definitions.py.
-- All source files needed to make this work are located in src/ directory. They do not need modification to run.
-
+- There is one database called data in data/databases/ directory. You can modify this in definitions.py.
+- All bot code is located in src/ directory. definitions.py is located in root directory.
 
 
 ## Booting Bot
 
-1. Create a bot and get the API key from [discord.com](https://discord.com/developers/applications).
+1. Create a bot and get the API key from [discord.com](https://discord.com/developers/applications). You have to create an application, then a bot for it. Then you will get a token.
 
 2. Fill out required data in .definitions.py and rename it to definitions.py.
 
-3. (Optional) Create a venv in the source dir. Or you can just use global interpreter.
-  1. Activate your environment with `$ source venv/bin/activate`
+3. (Optional) Create a venv in the source dir. Or you can just use global interpreter. Activate your environment with `$ source venv/bin/activate`.
 
 4. Run toolbox.sh and pick setup option. It will install dependencies and create required directories/files.
 
