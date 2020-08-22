@@ -137,6 +137,7 @@ def pillow_add_margin(image_path: str, top: int, right: int, bottom: int, left: 
     img = Image.new(image.mode, (new_width, new_height), color)
     img.paste(image, (left, top))
     img.save(image_path, format="png")
+    img.seek(0)
     return image_path
 
 

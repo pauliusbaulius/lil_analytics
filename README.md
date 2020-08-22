@@ -37,6 +37,10 @@ Commands generate compilation of statistics and send one embed together with add
 	Takes one user mention and one channel mention.
 	Timezone is optional, default is UTC time.
 	
+.today (timezone)
+	Shows statistics for the current day (not 24h).
+	Timezone is optional, default is UTC time.
+
 .index
 	Indexes messages in the server from the beginning.
 	TAKES A LONG TIME!
@@ -71,14 +75,19 @@ Commands generate compilation of statistics and send one embed together with add
 .ban <mention>
 	Ban mentioned user.
 
-.clear <amoount int>=0 or "all">
+.clear <amount int>=0 or "all">
 	Delete given amount of messages. "all" will delete all messages!
 	There is no way back from .clear all.
     It will completely nuke the channel it was called in.
     
-.gdpr
-	Delete all your messages in channel where command was called.
-	Takes a long time.
+.gdpr <mention>
+	Delete messages of tagged user in current channel.
+
+.export <mention> (amount int)
+	Export all or given amount of messages for tagged user.
+	If no amount is given, all messages will be exported!
+	Takes a while to iterate whole server and look for messages.
+	Creates and uploads CSV file.
 ```
 
 

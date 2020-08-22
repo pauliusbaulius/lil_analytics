@@ -85,6 +85,21 @@ def plot_message_times(guild_id: int, channel_id: int = None, user_id: int = Non
 
 
 @timer
+def plot_message_times_today(guild_id: int, timezone: int = 0) -> "path to plot image":
+    # TODO like above but for this day, not 24.
+    data = db.get_messages_by_hour_today(guild_id=guild_id)
+    x_val = [shift_hour(x[0], timezone) for x in data]
+    y_val = [x[1] for x in data]
+
+    return generate_plot(x_val,
+                         y_val,
+                         ylabel="Messages",
+                         title=f"Message times today UTC+{timezone}",
+                         show_x=True)
+
+
+
+@timer
 def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to plot image":
     data = db.get_messages_per_day(guild_id=guild_id, channel_id=channel_id, user_id=user_id, days=days)
     if data:
@@ -92,6 +107,11 @@ def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to
         x_val = [x[1] for x in data]
         return generate_barh(x_val, y_val, title=f"Messages last {days} days", xlabel="Messages")
 
+
+@timer
+def barh_messages_today():
+    # TODO like above but for this day! not 24h.
+    pass
 
 @timer
 def plot_histogram_message_length(guild_id, channel_id=None, user_id=None) -> "path to plot":
@@ -193,6 +213,17 @@ def plot_server_most_active(guild_id: int, amount: int, days: int = None, channe
 
 
 @timer
+def plot_server_most_active_today(guild_id: int, amount: int):
+    data = db.get_user_most_active_today(guild_id=guild_id, amount=amount)
+    if data:
+        x_val = [x[0] for x in data]
+        y_val = [x[1] for x in data]
+        title = f"Top {amount} users by messages"
+        xlabel = "Messages"
+        return generate_barh(x_val, y_val, title, xlabel)
+
+
+@timer
 def plot_server_channels_messages(guild_id: int, amount: int = -1, days: int = -1):
     data = get_channels_messages(guild_id=guild_id, amount=amount, days=days)
     if data:
@@ -200,6 +231,18 @@ def plot_server_channels_messages(guild_id: int, amount: int = -1, days: int = -
         y_val = [x[1] for x in data]
 
         title = f"Channels by total messages for last {days} days" if days > 0 else f"Channels by total messages"
+        xlabel = "Messages"
+        return generate_barh(x_val, y_val, title, xlabel)
+
+
+@timer
+def plot_server_channels_messages_today(guild_id: int, amount: int = -1):
+    data = db.get_channels_messages_today(guild_id=guild_id, amount=amount)
+    if data:
+        x_val = [x[0] for x in data]
+        y_val = [x[1] for x in data]
+
+        title = f"Channels by total messages"
         xlabel = "Messages"
         return generate_barh(x_val, y_val, title, xlabel)
 

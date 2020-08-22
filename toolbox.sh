@@ -20,9 +20,9 @@ run_tests () {
 
 clean_data () {
 	# Delete all generated data, leave code and venv.
-	rm -rf __pycache__ data/logs data/reports data/tmp
+	rm -rf __pycache__ src/__pycache__ src/cogs/__pycache__
 	#rm data/databases/data.db #TODO ask first before nuking whole db lol.
-	rm data/tmp/*
+	rm data/tmp/* data/logs/* data/reports/* data/tmp/*
 }
 
 

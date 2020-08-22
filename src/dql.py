@@ -56,6 +56,22 @@ def get_messages_total_days(guild_id: int, days: int, channel_id: int = None, us
 
 
 @timer
+def get_messages_total_today(guild_id: int) -> int:
+    sql = f"""SELECT count()
+              FROM (
+                  SELECT *
+                  FROM messages
+                  WHERE server_id == {guild_id} AND deleted == 0 AND DATE(messages.date) == DATE('now')
+                  ORDER BY DATE DESC
+              )"""
+
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchone()[0]
+    return data
+
+
+@timer
 def get_messages_per_day(guild_id: int, days: int, channel_id=None, user_id: int = None) -> list:
     """Returns list of tuples of total messages for given amount of days. If channel id is given, returns total
     messages per day for that channel.
@@ -117,12 +133,10 @@ def get_messages_per_month(guild_id: int, months: int, channel_id=None, user_id:
               ORDER BY 1 DESC
               LIMIT {months}"""
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(sql)
-        data = c.fetchall()
-
-        return data
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
 
 
 @timer
@@ -156,12 +170,10 @@ def get_messages_by_hour(guild_id: int, user_id: int = None, channel_id: int = N
               GROUP BY 1
               ORDER BY 1 ASC"""
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(sql)
-        data = c.fetchall()
-
-        return data
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
 
 
 @timer
@@ -185,12 +197,30 @@ def get_messages_by_hour_days(guild_id: int, days: int, user_id: int = None, cha
               GROUP BY hour
               ORDER BY hour ASC"""
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(sql)
-        data = c.fetchall()
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
 
-        return data
+
+@timer
+def get_messages_by_hour_today(guild_id: int) -> list:
+    # TODO like above but only for this day date(messages.date)==date('now')
+    sql = f"""SELECT strftime('%H', date) AS hour
+              ,COUNT(strftime('%H', date))
+              FROM (
+                  SELECT *
+                  FROM messages
+                  WHERE server_id == {guild_id} AND deleted == 0 AND DATE(messages.date) == DATE('now')
+                  ORDER BY DATE DESC
+              )
+              GROUP BY hour
+              ORDER BY hour ASC"""
+
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
 
 
 @timer
@@ -256,6 +286,22 @@ def get_user_most_active(guild_id: int, amount: int, channel_id: int = None, day
 
 
 @timer
+def get_user_most_active_today(guild_id: int, amount: int = -1):
+    # TODO AND DATE(messages.date) == DATE('now')
+    sql = f"""SELECT count(messages.id), author_name 
+              FROM messages
+              WHERE server_id == {guild_id} AND deleted == 0 AND DATE(messages.date) == DATE('now')
+              GROUP BY author_name 
+              ORDER BY count(id) DESC
+              LIMIT {amount}"""
+
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
+
+
+@timer
 def get_channels_messages(guild_id: int, amount: int = -1, days: int = -1) -> list:
     """Returns a list of tuples for total messages in each channel of the server in descending order.
     Amount of servers can be specified with amount parameter. -1 returns all channels.
@@ -263,22 +309,37 @@ def get_channels_messages(guild_id: int, amount: int = -1, days: int = -1) -> li
     # If user passes days as 0 or below 0, treat it as "query all days".
     date = f"date >= DATETIME ('now', '-{days + 1} days') AND" if days >= 1 else ""
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(f"""SELECT count(*) AS messages, channels.name
-                      FROM (
-                          SELECT *
-                          FROM messages INNER JOIN channels ON messages.channel_id == channels.id
-                          WHERE {date} messages.server_id == {guild_id} AND messages.deleted == 0
-                          ORDER BY DATE DESC
-                            ) channels
-                      GROUP BY channels.name
-                      ORDER BY count(*) DESC
-                      LIMIT {amount}""")
-        data = c.fetchall()
+    c = sqlite.db_cursor
+    c.execute(f"""SELECT count(*) AS messages, channels.name
+                  FROM (
+                      SELECT *
+                      FROM messages INNER JOIN channels ON messages.channel_id == channels.id
+                      WHERE {date} messages.server_id == {guild_id} AND messages.deleted == 0
+                      ORDER BY DATE DESC
+                        ) channels
+                  GROUP BY channels.name
+                  ORDER BY count(*) DESC
+                  LIMIT {amount}""")
+    data = c.fetchall()
+    return data
 
-        return data
 
+@timer
+def get_channels_messages_today(guild_id: int, amount: int = -1) -> list:
+    #TODO
+    c = sqlite.db_cursor
+    c.execute(f"""SELECT count(*) AS messages, channels.name
+                  FROM (
+                      SELECT *
+                      FROM messages INNER JOIN channels ON messages.channel_id == channels.id
+                      WHERE messages.server_id == {guild_id} AND messages.deleted == 0 AND DATE(messages.date) == DATE('now')
+                      ORDER BY DATE DESC
+                        ) channels
+                  GROUP BY channels.name
+                  ORDER BY count(*) DESC
+                  LIMIT {amount}""")
+    data = c.fetchall()
+    return data
 
 @timer
 def get_reaction_received_counts(guild_id: int, channel_id: int = None, user_id: int = None) -> list:
@@ -300,12 +361,24 @@ def get_reaction_received_counts(guild_id: int, channel_id: int = None, user_id:
               group by reaction_id
               order by count() desc"""
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(sql)
-        data = c.fetchall()
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
 
-        return data
+
+@timer
+def get_reactions_today(guild_id: int):
+    sql = f"""select count(), reaction_id
+                  from message_reactions join messages on message_reactions.id == messages.id
+                  where server_id == {guild_id} AND messages.deleted == 0 AND DATE(messages.date) == DATE('now')
+                  group by reaction_id
+                  order by count() desc"""
+
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
 
 
 @timer
@@ -330,12 +403,10 @@ def get_reaction_given_counts(guild_id: int, user_id: int = None, channel_id: in
               group by reaction_id
               order by count() desc"""
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(sql)
-        data = c.fetchall()
-
-        return data
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
 
 
 @timer
@@ -350,12 +421,10 @@ def get_messages_length(guild_id, channel_id, user_id) -> list:
               FROM messages
               WHERE {where} AND length > 0 AND deleted == 0"""
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(sql)
-        data = c.fetchall()
-
-        return data
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
+    return data
 
 
 @timer
@@ -380,10 +449,9 @@ def get_messages_by_weekday_days(guild_id: int, days: int, user_id: int = None, 
                ORDER BY day ASC
               """
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(sql)
-        data = c.fetchall()
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
 
     days = {
         0: "Sunday",
@@ -423,10 +491,9 @@ def get_message_hour_weekday_heatmap(guild_id: int, channel_id: int = None, user
               WHERE {where} AND deleted == 0
               GROUP BY hour, weekday"""
 
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(sql)
-        data = c.fetchall()
+    c = sqlite.db_cursor
+    c.execute(sql)
+    data = c.fetchall()
 
     days = {
         0: "Sunday",

@@ -309,7 +309,6 @@ async def reaction_clear_raw(payload: discord.RawReactionClearEvent):
 @timer
 async def background_parse_history(client: discord.Client, guild_id: int):
     """Goes over all channels and parses yet non-parsed messages."""
-    # TODO log this function to file: channel: time taken with guild_id and channel info!
     guild = client.get_guild(int(guild_id))
     messages = 0
     channels = []
@@ -321,7 +320,7 @@ async def background_parse_history(client: discord.Client, guild_id: int):
 
 @timer
 async def _parse_channel_history(channel: discord.TextChannel) -> int:
-    """ Uses discord.py history method to iterate channel's history from the newest to the oldest message.
+    """Uses discord.py history method to iterate channel's history from the newest to the oldest message.
 
     :param channel: Discord channel object to index.
     :return: Amount of messages iterated in channel's history.
@@ -329,15 +328,13 @@ async def _parse_channel_history(channel: discord.TextChannel) -> int:
     messages = []
     message_counter = 0
     async for message in channel.history(limit=None):
-        #await add_message(message)
         messages.append(message)
         message_counter += 1
-
         # Insert every 500 messages! This uses db connection every 500 messages instead of every single one!
         if message_counter % 500 == 0:
             await add_message_bulk(messages)
             messages.clear()
-
+    # Insert remaining messages.
     if messages:
         await add_message_bulk(messages)
 
