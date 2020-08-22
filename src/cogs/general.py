@@ -12,10 +12,12 @@ class ToolsGeneral(commands.Cog):
 
     @commands.command(aliases=["help", "h"])
     async def functions(self, ctx):
-        embed = discord.Embed(title="General Commands", description=f'You can find out more [here]({definitions.github_link}).',
+        embed = discord.Embed(title="General Commands",
+                              description=f'You can find out more [here]({definitions.github_link}).',
                               color=0x008000)
         embed.add_field(name="server", value="Server statistics.")
-        embed.add_field(name="channel", value="Channel statistics. Tag a channel. Give integer for timezone. Berlin is +2.")
+        embed.add_field(name="channel",
+                        value="Channel statistics. Tag a channel. Give integer for timezone. Berlin is +2.")
         embed.add_field(name="user", value="User statistics. Tag a user. Give integer for timezone. Berlin is +2.")
         embed.add_field(name="today", value="Daily statistics. Give integer for timezone. Berlin is +2.")
         embed.add_field(name="info", value="Information about lil analytics.")
@@ -49,7 +51,6 @@ class ToolsGeneral(commands.Cog):
     @commands.cooldown(1, 60, commands.BucketType.user)
     async def info(self, ctx):
         """Prints information about the bot. Sends an embedded message."""
-        # TODO add info how many commands executed in total!
         # Get links from settings.json
         desc = "Message metadata analytics for your server! Type .help or .h to see all available commands."
         embed = discord.Embed(title="lil analytics", description=desc, color=0xffff00)
@@ -111,6 +112,7 @@ async def send_avatar(ctx, mentioned_id):
 async def send_user(ctx, mentioned_id):
     # Parse roles in readable format.
     roles = [role.name for role in mentioned_id.roles]
+
     # Parse permissions.
     permissions = []
     activity = iter(mentioned_id.guild_permissions)
@@ -120,10 +122,8 @@ async def send_user(ctx, mentioned_id):
     # Dirty cast datetime to string and remove seconds and milliseconds.
     join_date = mentioned_id.joined_at
     join_date = str(join_date)[:16]
-
     created_date = mentioned_id.created_at
     created_date = str(created_date)[:16]
-
     status_message = f"Desktop: {mentioned_id.desktop_status}\n " \
                      f"Mobile: {mentioned_id.mobile_status}\n " \
                      f"Web: {mentioned_id.web_status}"
@@ -136,6 +136,7 @@ async def send_user(ctx, mentioned_id):
     embed.add_field(name="Joined this server:", value=join_date, inline=False)
     embed.add_field(name="Has roles:", value=", ".join(roles), inline=False)
     embed.add_field(name="Top role:", value=mentioned_id.top_role, inline=False)
+
     # Handle different activities
     for activity in mentioned_id.activities:
         # if activity.type is discord.ActivityType.listening:

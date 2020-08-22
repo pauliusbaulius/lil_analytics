@@ -98,7 +98,6 @@ def plot_message_times_today(guild_id: int, timezone: int = 0) -> "path to plot 
                          show_x=True)
 
 
-
 @timer
 def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to plot image":
     data = db.get_messages_per_day(guild_id=guild_id, channel_id=channel_id, user_id=user_id, days=days)
@@ -112,6 +111,7 @@ def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to
 def barh_messages_today():
     # TODO like above but for this day! not 24h.
     pass
+
 
 @timer
 def plot_histogram_message_length(guild_id, channel_id=None, user_id=None) -> "path to plot":

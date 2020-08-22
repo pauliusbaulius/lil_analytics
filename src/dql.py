@@ -1,5 +1,4 @@
 import datetime
-import sqlite3
 
 from dateutil import parser
 
@@ -57,6 +56,7 @@ def get_messages_total_days(guild_id: int, days: int, channel_id: int = None, us
 
 @timer
 def get_messages_total_today(guild_id: int) -> int:
+    # TODO
     sql = f"""SELECT count()
               FROM (
                   SELECT *
@@ -228,17 +228,16 @@ def get_user_message_date(guild_id: int, user_id: int, order: str = "DESC", tz: 
     """Get latest/first message date of user given user id and server id.
     Given order DESC, returns latest message, ASC returns first message.
     """
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute(f"""select messages.date
-                    from messages
-                    WHERE author_id == {user_id} AND server_id == {guild_id}
-                    order by messages.date {order}
-                    limit 1""")
+    c = sqlite.db_cursor
+    c.execute(f"""select messages.date
+                from messages
+                WHERE author_id == {user_id} AND server_id == {guild_id}
+                order by messages.date {order}
+                limit 1""")
 
-        date = parser.parse(c.fetchone()[0]) + datetime.timedelta(hours=tz)
-        tz = f"UTC+{tz}" if tz >= 0 else f"UTC{tz}"
-        return date.strftime(f"%Y-%m-%d %H:%M:%S {tz}")
+    date = parser.parse(c.fetchone()[0]) + datetime.timedelta(hours=tz)
+    tz = f"UTC+{tz}" if tz >= 0 else f"UTC{tz}"
+    return date.strftime(f"%Y-%m-%d %H:%M:%S {tz}")
 
 
 @timer
@@ -340,6 +339,7 @@ def get_channels_messages_today(guild_id: int, amount: int = -1) -> list:
                   LIMIT {amount}""")
     data = c.fetchall()
     return data
+
 
 @timer
 def get_reaction_received_counts(guild_id: int, channel_id: int = None, user_id: int = None) -> list:
@@ -534,13 +534,3 @@ def get_conditional_where(guild_id: int, channel_id: int = None, user_id: int = 
     else:
         where = f"server_id == {guild_id}"
     return where
-
-
-if __name__ == "__main__":
-    # Values for manual testing :|
-    gid = 686598539136073780
-    cid = 686598539677270168
-    uid = 656942502498271275
-
-    print(get_message_hour_weekday_heatmap(gid))
-    # TODO make them check for messages deleted=1 and not take those into account!

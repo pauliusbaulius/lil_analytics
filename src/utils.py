@@ -64,9 +64,9 @@ def generate_graph_path_filename() -> "path and filename for a temporary file":
     return os.path.join(path, f"{now}_{random_number}.png")
 
 
+@DeprecationWarning
 def get_database() -> "path to database":
     """Returns database path from config with the right path."""
-    # TODO should return session created at boot! with WAL mode to improve perf.
     return os.path.join(definitions.root_dir, definitions.database)
 
 
@@ -76,15 +76,11 @@ def pillow_join_images(images: list, direction='horizontal', bg_color=(255, 255,
 
     https://stackoverflow.com/questions/30227466/combine-several-images-horizontally-with-python
 
-    Args:
-        open_images: List of PIL images
-        direction: direction of concatenation, 'horizontal' or 'vertical'
-        bg_color: Background color (default: white)
-        alignment: alignment mode if images need padding;
-           'left', 'right', 'top', 'bottom', or 'center'
-
-    Returns:
-        Concatenated image as a new PIL image object.
+    :param images: List of PIL image paths.
+    :param direction: Direction of concatenation, 'horizontal' or 'vertical'
+    :param bg_color: Background color (default: white)
+    :param alignment: alignment mode if images need padding. 'left', 'right', 'top', 'bottom', or 'center'
+    :return Concatenated image as a new PIL image object.
     """
     open_images = [Image.open(x) for x in images]
     widths, heights = zip(*(i.size for i in open_images))
@@ -117,7 +113,9 @@ def pillow_join_images(images: list, direction='horizontal', bg_color=(255, 255,
             img.paste(im, (x, offset))
             offset += im.size[1]
 
-    #image_path = generate_graph_path_filename()
+    # Free up memory.
+    for x in open_images:
+        x.close()
     image_path = io.BytesIO()
     img.save(image_path, format="png")
     image_path.seek(0)
@@ -144,6 +142,7 @@ def pillow_add_margin(image_path: str, top: int, right: int, bottom: int, left: 
 @timer
 def pillow_join_grid(t: int = 0, r: int = 0, b: int = 0, l: int = 0, *columns: list) -> "path to image":
     """Given image padding and columns, returns a single path to image.
+
     Joins multiple columns horizontally. Images in columns are joined vertically.
     Padding is applied to each image before joining.
     """

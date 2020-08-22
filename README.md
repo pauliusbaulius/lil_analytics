@@ -152,6 +152,6 @@ Commands that can only be executed by the person who has the *sudo* rights in th
 
 - [x] Export path in program, so the user wont have to DIY.
 - [ ] Runner that sets up different loggers, one for function calls, one for performance analysis generators, one for debug. All need to be rotated and saved in logs/
-- [ ] Discord invite with less permissions, admin is not needed after alpha/debug phase
+- [x] Discord invite with less permissions, admin is not needed after alpha/debug phase
 - [ ] flake8, pytest, automatic check on master push with actions. pep8 rules.
 - [x] Migrate to definitions.py from settings.json
