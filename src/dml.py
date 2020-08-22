@@ -4,11 +4,7 @@ import re
 import discord
 
 from src.decorators import timer
-<<<<<<< HEAD
 import src.sqlite as sqlite
-=======
-from src.utils import get_database
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 
 
 """
@@ -101,7 +97,6 @@ async def add_message_metadata_bulk(messages: list):
     c.executemany('DELETE FROM channel_mentions WHERE id == ?', message_ids)
     c.executemany('DELETE FROM role_mentions WHERE id == ?', message_ids)
 
-<<<<<<< HEAD
     # Insert new metadata.
     c.executemany('INSERT OR IGNORE INTO user_mentions VALUES (?, ?)', user_mentions)
     c.executemany('INSERT OR IGNORE INTO channel_mentions VALUES (?, ?)', channel_mentions)
@@ -130,8 +125,6 @@ async def add_reactions_bulk(messages: list):
     cn.commit()
 
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def add_message_metadata(message_id: int, user_mentions: list, channel_mentions: list, role_mentions: list,
                                reactions):
@@ -166,10 +159,7 @@ async def add_message_metadata(message_id: int, user_mentions: list, channel_men
     for reaction in reactions:
         await add_reactions(reaction)
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def message_bulk_delete(message_ids: list):
     """Given a list of message ids, soft deletes those messages in the database by setting deleted=1.
@@ -179,7 +169,6 @@ async def message_bulk_delete(message_ids: list):
     Arguments:
         message_ids: A list of discord.Message ids or message objects.
     """
-<<<<<<< HEAD
     # TODO add message to db if does not exist!
     cn = sqlite.db_connection
     c = sqlite.db_cursor
@@ -190,17 +179,6 @@ async def message_bulk_delete(message_ids: list):
             c.execute('UPDATE messages SET deleted = 1 WHERE id == ?', (message_id.id,))
     cn.commit()
 
-=======
-    with sqlite3.connect(get_database()) as cn:
-        c = cn.cursor()
-        c.execute('PRAGMA foreign_keys = ON')
-        for message_id in message_ids:
-            if isinstance(message_id, int):
-                c.execute('DELETE FROM messages WHERE id == ?', (message_id,))
-            else:
-                c.execute('DELETE FROM messages WHERE id == ?', (message_id.id,))
-        cn.commit()
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 
 @timer
 async def message_delete(message_id: int):
@@ -215,10 +193,7 @@ async def message_delete(message_id: int):
     c.execute('UPDATE messages SET deleted = 1 WHERE id == ?', (message_id,))
     cn.commit()
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def message_update(message: discord.Message = None, message_raw: discord.RawMessageUpdateEvent = None):
     """Given a normal discord message or raw message update event, updates
@@ -259,10 +234,7 @@ async def message_update(message: discord.Message = None, message_raw: discord.R
             # RawMessageUpdateEvent also triggered when you post image or url in embeds, need to ignore that.
             pass
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def add_reactions(reaction: discord.Reaction):
     """Given reaction object, adds relevant data to the database."""
@@ -278,7 +250,7 @@ async def add_reactions(reaction: discord.Reaction):
     c.executemany('INSERT INTO message_reactions VALUES (?, ?, ?, ?)', values)
     cn.commit()
 
-@timer
+
 async def add_reaction_raw(message_id: int, reaction_id, reacted_id: int):
     """Given message, reaction and user which reacted ids, creates an entry in
     the database."""
@@ -288,18 +260,12 @@ async def add_reaction_raw(message_id: int, reaction_id, reacted_id: int):
                                                                               reacted_id, hash(str(reaction_id))))
     cn.commit()
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def add_reaction(reaction: discord.Reaction, reacted_id: int):
     await add_reaction_raw(reaction.message.id, reaction.emoji, reacted_id)
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def remove_reaction_raw(message_id: int, reaction_id, reacted_id: int):
     """Given a message id and other data needed to construct a key, deletes
@@ -310,18 +276,12 @@ async def remove_reaction_raw(message_id: int, reaction_id, reacted_id: int):
               (message_id, str(reaction_id), reacted_id))
     cn.commit()
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def remove_reaction(reaction: discord.Reaction, reacted_id: int):
     await remove_reaction_raw(reaction.message.id, reaction.emoji, reacted_id)
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def reaction_clear(message: discord.Message, reactions):
     # TODO delete reactions for that message
@@ -333,10 +293,7 @@ async def reaction_clear(message: discord.Message, reactions):
               (message_id,))
     cn.commit()
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def reaction_clear_raw(payload: discord.RawReactionClearEvent):
     # TODO delete reactions for that message
@@ -348,10 +305,7 @@ async def reaction_clear_raw(payload: discord.RawReactionClearEvent):
               (message_id,))
     cn.commit()
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def background_parse_history(client: discord.Client, guild_id: int):
     """Goes over all channels and parses yet non-parsed messages."""
@@ -364,10 +318,7 @@ async def background_parse_history(client: discord.Client, guild_id: int):
         messages += await _parse_channel_history(channel)
     return messages, ' '.join(channels)
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 async def _parse_channel_history(channel: discord.TextChannel) -> int:
     """ Uses discord.py history method to iterate channel's history from the newest to the oldest message.
@@ -392,10 +343,7 @@ async def _parse_channel_history(channel: discord.TextChannel) -> int:
 
     return message_counter
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def add_reply(text: str):
     """Adds a new reply to bot_replies for bot to use.
@@ -409,10 +357,7 @@ def add_reply(text: str):
     c.execute('INSERT INTO bot_replies VALUES (?, ?)', (text, now))
     cn.commit()
 
-<<<<<<< HEAD
 
-=======
->>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def get_reply() -> str:
     """Returns a random reply from bot_replies if there are any, otherwise it returns None.
