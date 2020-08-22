@@ -7,17 +7,15 @@ from logging.handlers import TimedRotatingFileHandler
     They can then be imported to other modules and be used for logging.
     If you are contributing, please create new loggers here or use existing loggers defined here.
     
-    There are 4 loggers to choose:
-    1. logger_debug
-        Feed it all debug info, @log_debug decorator which saves passed args and kwargs, etc.
-        
-    2. logger_main
+    There are 3 loggers to choose:
+    
+    1. logger_main
         Useful information, no debug messages. See how program behaves in the long run.
     
-    3. logger_performance
-        Testing function performance with @log_timer, @log_resources decorators.
+    2. logger_performance
+        Testing function performance with @timer, @resources(#TODO) decorators.
         
-    4. logger_critical
+    3. logger_critical
         For critical times, like database deadlocks, failed writes, etc. 
         I will make this send notifications, less messages are better.
     

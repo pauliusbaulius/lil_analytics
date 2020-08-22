@@ -1,4 +1,5 @@
 import datetime
+import io
 import json
 import os
 import random
@@ -15,6 +16,7 @@ from src.decorators import timer
 """
 
 
+@DeprecationWarning
 def load_settings():
     config_path = os.path.join(definitions.root_dir, 'settings.json')
     with open(config_path) as json_file:
@@ -35,9 +37,8 @@ def find_word(string: str, word: str) -> bool:
     find_word("I love this bot very much!", "bot")
     >>True
     """
-    # TODO check for lil_analytics and etc, ignore case and separators.
     # Spaces are there to not return words in words.
-    return f' {word} ' in f' {string} '
+    return f' {word.lower()} ' in f' {string.lower()} '
 
 
 def is_me(mentions: "list of mentions") -> bool:
@@ -55,8 +56,9 @@ def is_owner(user_id: "user id as integer") -> bool:
     return user_id == definitions.sudoer
 
 
+@DeprecationWarning
 def generate_graph_path_filename() -> "path and filename for a temporary file":
-    path = os.path.join(definitions.root_dir, definitions.media)
+    path = os.path.join(definitions.root_dir, definitions.temporary_dir)
     now = str(datetime.now().strftime("%Y%m%d%H%M%S"))
     random_number = random.randint(10000, 100000)
     return os.path.join(path, f"{now}_{random_number}.png")
@@ -68,6 +70,7 @@ def get_database() -> "path to database":
     return os.path.join(definitions.root_dir, definitions.database)
 
 
+@timer
 def pillow_join_images(images: list, direction='horizontal', bg_color=(255, 255, 255), alignment='center'):
     """Appends images in horizontal/vertical direction.
 
@@ -114,16 +117,14 @@ def pillow_join_images(images: list, direction='horizontal', bg_color=(255, 255,
             img.paste(im, (x, offset))
             offset += im.size[1]
 
-    image_path = generate_graph_path_filename()
-    img.save(image_path)
-
-    # Delete image after joining!
-    for img in images:
-        os.remove(img)
-
+    #image_path = generate_graph_path_filename()
+    image_path = io.BytesIO()
+    img.save(image_path, format="png")
+    image_path.seek(0)
     return image_path
 
 
+@timer
 def pillow_add_margin(image_path: str, top: int, right: int, bottom: int, left: int, color=(255, 255, 255)):
     """Add margins to a given image.
 
@@ -135,7 +136,7 @@ def pillow_add_margin(image_path: str, top: int, right: int, bottom: int, left: 
     new_height = height + top + bottom
     img = Image.new(image.mode, (new_width, new_height), color)
     img.paste(image, (left, top))
-    img.save(image_path)
+    img.save(image_path, format="png")
     return image_path
 
 
@@ -145,7 +146,6 @@ def pillow_join_grid(t: int = 0, r: int = 0, b: int = 0, l: int = 0, *columns: l
     Joins multiple columns horizontally. Images in columns are joined vertically.
     Padding is applied to each image before joining.
     """
-    print(columns)
     joined_columns = []
     # Add padding to each image in column and then send them to be joined vertically.
     for col in columns:

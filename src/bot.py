@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 import discord
 from discord.ext import commands
@@ -8,6 +9,7 @@ import src.ddl
 import src.dml as db
 import definitions
 from src.decorators import timer
+from src.logger import setup_loggers
 from src.utils import find_word, is_owner
 
 # Load bot prefix from settings.json
@@ -16,17 +18,30 @@ client.remove_command("help")
 
 
 def start_bot():
+    print("lil_analytics: Calling start_bot() in bot.py!")
+
+    print("lil_analytics: Adding src/ to syspath!")
+    sys.path.insert(0, os.path.join(definitions.root_dir, "src/"))
+
+    print("lil analytics: Setting up logging.")
+    setup_loggers()
+
+    print("lil analytics: Building database schema if database is empty.")
     src.ddl.build_database()
 
+    print("lil analytics: Loading cogs.")
     # Load all cogs by default.
     for filename in os.listdir(os.path.join(definitions.root_dir, "src/cogs/")):
         if filename.endswith(".py"):
             client.load_extension(f"cogs.{filename[:-3]}")
 
-    # Start background tasks
+    # print("Background indexing of messages in last 72h started!")
+    # Start background tasks # TODO should do on start? to get all missed messages during downtime. or do every 24h?
     # client.loop.create_task(background_parser())
+    # Should iterate 72h worth of messages! if bot is offline for longer, use index!
+    # after=current_time-72h
 
-    # Start client
+    print("lil analytics: Connecting to Discord and starting the client...")
     client.run(definitions.bot_token)
 
 
@@ -34,7 +49,7 @@ def start_bot():
 async def on_ready():
     """This runs if everything goes right."""
     await client.change_presence(activity=discord.Game(name=definitions.status_message))
-    print("lil_analytics: bot is now running!")
+    print("lil_analytics: Bot is now running!")
 
 
 @timer

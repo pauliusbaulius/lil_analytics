@@ -1,11 +1,13 @@
-import numpy as np
+import io
+
 from matplotlib import pyplot as plt
 from matplotlib.ticker import PercentFormatter
 
 import src.dql as db
+from src.decorators import timer
 from src.dql import (get_channels_messages, get_messages_growth_days,
                      get_user_channel_activity, get_user_most_active)
-from src.utils import generate_graph_path_filename, shift_hour
+from src.utils import shift_hour
 
 
 """
@@ -17,6 +19,7 @@ from src.utils import generate_graph_path_filename, shift_hour
 """
 
 
+@timer
 def plot_growth_message_days(guild_id: int, days: int, channel_id=None, user_id: int = None) -> "path to plot image":
     """Plots message growth per day for given amount of days. Can be done for server, channel, user or user
     in a channel.
@@ -40,6 +43,7 @@ def plot_growth_message_days(guild_id: int, days: int, channel_id=None, user_id:
         return path
 
 
+@timer
 def plot_message_times(guild_id: int, channel_id: int = None, user_id: int = None, timezone: int = 0) -> "path to " \
                                                                                                          "plot image":
     """Plots user messages per hour. Considers all messages from all channels. Generates a plot for 7, 30 and all days.
@@ -80,6 +84,7 @@ def plot_message_times(guild_id: int, channel_id: int = None, user_id: int = Non
     return finish_plt(plt)
 
 
+@timer
 def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to plot image":
     data = db.get_messages_per_day(guild_id=guild_id, channel_id=channel_id, user_id=user_id, days=days)
     if data:
@@ -88,6 +93,7 @@ def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to
         return generate_barh(x_val, y_val, title=f"Messages last {days} days", xlabel="Messages")
 
 
+@timer
 def plot_histogram_message_length(guild_id, channel_id=None, user_id=None) -> "path to plot":
     """Generate histogram form message length distribution.
     Does it for server, channel, user or user in a channel.
@@ -104,16 +110,16 @@ def plot_histogram_message_length(guild_id, channel_id=None, user_id=None) -> "p
         fig, axs = plt.subplots(2, 2)
         fig.suptitle("Msg len. distribution", fontsize=13)
 
-        axs[0, 0].hist([x for x in x_val if x <= 100], bins=100, color="blue")
+        axs[0, 0].hist([x for x in x_val if x <= 100], bins=30, color="blue")
         axs[0, 0].set_title("<= 100", fontsize=8)
 
-        axs[0, 1].hist([x for x in x_val if x <= 250], bins=100, color="blue")
+        axs[0, 1].hist([x for x in x_val if x <= 250], bins=30, color="blue")
         axs[0, 1].set_title("<= 250", fontsize=8)
 
-        axs[1, 0].hist([x for x in x_val if x <= 500], bins=100, color="blue")
+        axs[1, 0].hist([x for x in x_val if x <= 500], bins=30, color="blue")
         axs[1, 0].set_title("<= 500", fontsize=10)
 
-        axs[1, 1].hist(x_val, bins=100, color="blue")
+        axs[1, 1].hist(x_val, bins=30, color="blue")
         axs[1, 1].set_title("All lengths", fontsize=8)
 
         plt.tight_layout()
@@ -121,6 +127,7 @@ def plot_histogram_message_length(guild_id, channel_id=None, user_id=None) -> "p
         return finish_plt(plt)
 
 
+@timer
 def plot_histogram_users_messages(guild_id: int, channel_id: int = None, cumulative: bool = True):
     """Generate user message distribution histogram. Can be done for the whole server or a channel."""
     data = db.get_user_most_active(guild_id=guild_id, channel_id=channel_id, amount=-1)
@@ -141,6 +148,7 @@ def plot_histogram_users_messages(guild_id: int, channel_id: int = None, cumulat
         return finish_plt(plt)
 
 
+@timer
 def plot_bar_messages_weekday(guild_id: int, user_id: int = None, channel_id: int = None) -> "path to plot":
     # Build plot of of 2 subplots for messages per hour for last 7 days and all time in server.
     fig, axs = plt.subplots(3, constrained_layout=True)
@@ -173,6 +181,7 @@ def plot_bar_messages_weekday(guild_id: int, user_id: int = None, channel_id: in
     return finish_plt(plt)
 
 
+@timer
 def plot_server_most_active(guild_id: int, amount: int, days: int = None, channel_id: int = None):
     data = get_user_most_active(guild_id=guild_id, amount=amount, days=days, channel_id=channel_id)
     if data:
@@ -183,6 +192,7 @@ def plot_server_most_active(guild_id: int, amount: int, days: int = None, channe
         return generate_barh(x_val, y_val, title, xlabel)
 
 
+@timer
 def plot_server_channels_messages(guild_id: int, amount: int = -1, days: int = -1):
     data = get_channels_messages(guild_id=guild_id, amount=amount, days=days)
     if data:
@@ -194,6 +204,7 @@ def plot_server_channels_messages(guild_id: int, amount: int = -1, days: int = -
         return generate_barh(x_val, y_val, title, xlabel)
 
 
+@timer
 def barh_user_channel_activity(guild_id, author_id, author_name):
     data = get_user_channel_activity(guild_id, author_id)
     if data:
@@ -204,6 +215,7 @@ def barh_user_channel_activity(guild_id, author_id, author_name):
         return generate_barh(x_val, y_val, title, xlabel)
 
 
+@timer
 def plot_server_growth_messages_days(guild_id, days):
     """
 
@@ -217,6 +229,7 @@ def plot_server_growth_messages_days(guild_id, days):
         return generate_plot(x_val, y_val, title, ylabel, show_x=False if days == -1 else True)
 
 
+@timer
 def generate_plot(x, y, title, ylabel, show_x=True):
     plt.plot(x, y)
     plt.title(title)
@@ -235,6 +248,7 @@ def generate_plot(x, y, title, ylabel, show_x=True):
     return finish_plt(plt)
 
 
+@timer
 def generate_barh(x, y, title, xlabel) -> "Path to graph image":
     """Generate a horizontal bar chart from given values. Decreases copy
     pasting of boilerplate between similar functions."""
@@ -261,16 +275,19 @@ def generate_barh(x, y, title, xlabel) -> "Path to graph image":
     return finish_plt(plt)
 
 
-def finish_plt(plt: plt) -> "path to plot on filesystem":
-    """Does the annoying thing of generating path filename, saving it and clearing plot. Returns a path to plot."""
-    # Generate a randomized filename and save graph. Return absolute path.
-    graph_location = generate_graph_path_filename()
-    plt.savefig(graph_location)
+@timer
+def finish_plt(plt: plt) -> "path to plot in mem":
+    """Saves plot in memory and returns location to caller."""
+    # Save plot in memory.
+    graph_location = io.BytesIO()
+    plt.savefig(graph_location, format="png")
     # Close figure to reset settings!
     plt.close()
+    graph_location.seek(0)
     return graph_location
 
 
+@timer
 def plot_message_hour_weekday_heatmap(guild_id: int, channel_id: int = None, user_id: int = None):
     data = db.get_message_hour_weekday_heatmap(guild_id=guild_id, channel_id=channel_id, user_id=user_id)
     z = []

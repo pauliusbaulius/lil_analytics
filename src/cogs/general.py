@@ -33,11 +33,12 @@ class ToolsGeneral(commands.Cog):
         embed = discord.Embed(title="Administration Commands",
                               description=f'You can find out more [here]({definitions.github_link}).',
                               color=0xff0000)
-        embed.add_field(name="kick", value="#TODO")
-        embed.add_field(name="ban", value="#TODO")
-        #embed.add_field(name="mute", value="#TODO")
+        embed.add_field(name="kick", value="Kicks mentioned user. Can pass a reason.")
+        embed.add_field(name="ban", value="Bans mentioned user. Can pass a reason.")
         embed.add_field(name="clear", value="Takes number or 'all' as argument. Deletes messages.")
-        embed.add_field(name="gdpr", value="Deletes all messages in the channel made by the caller.")
+        embed.add_field(name="gdpr", value="Deletes all messages in the channel made by the mentioned user.")
+        embed.add_field(name="export", value="Exports all messages in the server made by the mentioned user. "
+                                             "Can give be given a limit. Otherwise exports all messages.")
         await ctx.send(embed=embed)
 
     @commands.command()

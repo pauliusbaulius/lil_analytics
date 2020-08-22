@@ -11,7 +11,8 @@ def timer(function):
         bef = default_timer()
         ret = function(*args, **kwargs)
         aft = default_timer()
-        logger.info('{:s} took {:0.4f}ms:args{}:kwargs{}'.format(function.__name__, ((aft - bef) * 1000), args, kwargs))
+        #logger.info('{:s} took {:0.4f}ms:args{}:kwargs{}'.format(function.__name__, ((aft - bef) * 1000), args, kwargs))
+        logger.info('{:s} took {:0.6f}ms'.format(function.__name__, ((aft - bef) * 1000), args, kwargs))
         return ret
     return wrapper
 

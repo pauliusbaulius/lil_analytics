@@ -143,7 +143,7 @@ def _server(tz: int, guild):
     time = "It took me {:.2f} seconds to complete this function.".format(end - start)
 
     # Delete image, it is open in memory and will be still sent!
-    os.remove(image_path)
+    #os.remove(image_path)
 
     return embed, file, time
 
@@ -213,7 +213,7 @@ def _channel(tz: int, channel: discord.TextChannel, guild: discord.Guild):
     time = "It took me {:.2f} seconds to complete this function.".format(end - start)
 
     # Delete image, it is open in memory and will be still sent!
-    os.remove(image_path)
+    #os.remove(image_path)
 
     return embed, file, time
 
@@ -262,13 +262,13 @@ def _user(gid, tz: int, member: discord.Member):
     embed.add_field(name="Username:", value=member.name)
     embed.add_field(name="Joined:", value=join_date)
     embed.add_field(name="Top role:", value=member.top_role)
-    embed.add_field(name="Messages:", value=str(total_messages))
-    embed.add_field(inline=False, name="First message:", value=first_message)
-    embed.add_field(inline=False, name="Latest message:", value=last_message)
+    embed.add_field(name="Messages:", value=str(total_messages) if not None else "Not enough data.")
+    embed.add_field(inline=False, name="First message:", value=first_message if not None else "Not enough data.")
+    embed.add_field(inline=False, name="Latest message:", value=last_message if not None else "Not enough data.")
     embed.add_field(name="Reactions given:", value=total_given)
     embed.add_field(name="Reactions received:", value=total_received)
-    embed.add_field(inline=False, name="Top given reactions:", value=top_given)
-    embed.add_field(inline=False, name="Top received reactions:", value=top_received)
+    if top_given: embed.add_field(inline=False, name="Top given reactions:", value=top_given)
+    if top_received: embed.add_field(inline=False, name="Top received reactions:", value=top_received)
     embed.set_author(name="USER ANALYTICS")
     embed.set_thumbnail(url=member.avatar_url)
 
@@ -276,7 +276,8 @@ def _user(gid, tz: int, member: discord.Member):
     time = "It took me {:.2f} seconds to complete this function.".format(end - start)
 
     # Delete image, it is open in memory and will be still sent!
-    os.remove(image_path)
+    #os.remove(image_path)
+    image_path.close()
 
     return embed, file, time
 

@@ -1,10 +1,8 @@
 #!/bin/bash
 
 setup () {
-	# Remove cache and pytest output.
-	rm -rf __pycache__ reports
 	# Setup dirs.
-	mkdir -p data/{databases,media,logs}
+	mkdir -p data/{databases,media,logs,tmp,reports}
 	# Create blank db if does not exist.
 	touch data/databases/data.db
 	# Install dependencies.
@@ -12,19 +10,19 @@ setup () {
 }
 
 run_tests () {
-	rm -rf reports
-	mkdir reports
+	rm -rf data/reports
+	mkdir data/reports
 	# Run tests/ with coverage.
 	pytest --cov-config=setup.cfg
 	# Run flake8 and generate report in reports dir!
-	flake8 > reports/flake8.txt
+	flake8 > data/reports/flake8.txt
 }
 
 clean_data () {
 	# Delete all generated data, leave code and venv.
-	rm -rf __pycache__ logs reports
+	rm -rf __pycache__ data/logs data/reports data/tmp
 	#rm data/databases/data.db #TODO ask first before nuking whole db lol.
-	rm data/media/tmp/*
+	rm data/tmp/*
 }
 
 
