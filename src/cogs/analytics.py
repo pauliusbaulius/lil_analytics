@@ -277,7 +277,10 @@ def _user(gid, tz: int, member: discord.Member):
 
     # Delete image, it is open in memory and will be still sent!
     #os.remove(image_path)
+<<<<<<< HEAD
     image_path.close()
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 
     return embed, file, time
 

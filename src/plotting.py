@@ -1,5 +1,9 @@
 import io
 
+<<<<<<< HEAD
+=======
+import numpy as np
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 from matplotlib import pyplot as plt
 from matplotlib.ticker import PercentFormatter
 
@@ -18,7 +22,10 @@ from src.utils import shift_hour
     DRY dies here. Rip.
 """
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_growth_message_days(guild_id: int, days: int, channel_id=None, user_id: int = None) -> "path to plot image":
     """Plots message growth per day for given amount of days. Can be done for server, channel, user or user
@@ -42,7 +49,10 @@ def plot_growth_message_days(guild_id: int, days: int, channel_id=None, user_id:
                              show_x=show_x)
         return path
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_message_times(guild_id: int, channel_id: int = None, user_id: int = None, timezone: int = 0) -> "path to " \
                                                                                                          "plot image":
@@ -83,7 +93,10 @@ def plot_message_times(guild_id: int, channel_id: int = None, user_id: int = Non
 
     return finish_plt(plt)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to plot image":
     data = db.get_messages_per_day(guild_id=guild_id, channel_id=channel_id, user_id=user_id, days=days)
@@ -92,7 +105,10 @@ def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to
         x_val = [x[1] for x in data]
         return generate_barh(x_val, y_val, title=f"Messages last {days} days", xlabel="Messages")
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_histogram_message_length(guild_id, channel_id=None, user_id=None) -> "path to plot":
     """Generate histogram form message length distribution.
@@ -126,7 +142,10 @@ def plot_histogram_message_length(guild_id, channel_id=None, user_id=None) -> "p
 
         return finish_plt(plt)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_histogram_users_messages(guild_id: int, channel_id: int = None, cumulative: bool = True):
     """Generate user message distribution histogram. Can be done for the whole server or a channel."""
@@ -147,7 +166,10 @@ def plot_histogram_users_messages(guild_id: int, channel_id: int = None, cumulat
 
         return finish_plt(plt)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_bar_messages_weekday(guild_id: int, user_id: int = None, channel_id: int = None) -> "path to plot":
     # Build plot of of 2 subplots for messages per hour for last 7 days and all time in server.
@@ -180,7 +202,10 @@ def plot_bar_messages_weekday(guild_id: int, user_id: int = None, channel_id: in
 
     return finish_plt(plt)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_server_most_active(guild_id: int, amount: int, days: int = None, channel_id: int = None):
     data = get_user_most_active(guild_id=guild_id, amount=amount, days=days, channel_id=channel_id)
@@ -191,7 +216,10 @@ def plot_server_most_active(guild_id: int, amount: int, days: int = None, channe
         xlabel = "Messages"
         return generate_barh(x_val, y_val, title, xlabel)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_server_channels_messages(guild_id: int, amount: int = -1, days: int = -1):
     data = get_channels_messages(guild_id=guild_id, amount=amount, days=days)
@@ -203,7 +231,10 @@ def plot_server_channels_messages(guild_id: int, amount: int = -1, days: int = -
         xlabel = "Messages"
         return generate_barh(x_val, y_val, title, xlabel)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def barh_user_channel_activity(guild_id, author_id, author_name):
     data = get_user_channel_activity(guild_id, author_id)
@@ -214,7 +245,10 @@ def barh_user_channel_activity(guild_id, author_id, author_name):
         xlabel = "Messages"
         return generate_barh(x_val, y_val, title, xlabel)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_server_growth_messages_days(guild_id, days):
     """
@@ -228,7 +262,10 @@ def plot_server_growth_messages_days(guild_id, days):
         ylabel = "Messages"
         return generate_plot(x_val, y_val, title, ylabel, show_x=False if days == -1 else True)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def generate_plot(x, y, title, ylabel, show_x=True):
     plt.plot(x, y)
@@ -247,7 +284,10 @@ def generate_plot(x, y, title, ylabel, show_x=True):
 
     return finish_plt(plt)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def generate_barh(x, y, title, xlabel) -> "Path to graph image":
     """Generate a horizontal bar chart from given values. Decreases copy
@@ -274,7 +314,10 @@ def generate_barh(x, y, title, xlabel) -> "Path to graph image":
 
     return finish_plt(plt)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def finish_plt(plt: plt) -> "path to plot in mem":
     """Saves plot in memory and returns location to caller."""
@@ -286,7 +329,10 @@ def finish_plt(plt: plt) -> "path to plot in mem":
     graph_location.seek(0)
     return graph_location
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a7bb1b60ec419f897e1495a811aec29579830000
 @timer
 def plot_message_hour_weekday_heatmap(guild_id: int, channel_id: int = None, user_id: int = None):
     data = db.get_message_hour_weekday_heatmap(guild_id=guild_id, channel_id=channel_id, user_id=user_id)
