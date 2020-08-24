@@ -8,7 +8,8 @@ status_message = "his database of metadata"
 # Bot token. Need a token to run bot.
 bot_token = ""
 
-# Invite link. Create your own # TODO tutorial
+# Invite link. Create your own in OAuth2 settings of your application. Tick the bot box and make sure it has
+# read history permissions together with manage messages. Or just give it admin permissions... It won't nuke anything.
 invite_link = "https://discordapp.com/oauth2/authorize-client_id=672865567329353778&permissions=8&scope=bot"
 
 # Your discord id. This is needed for certain commands meant to be used by the owner only!

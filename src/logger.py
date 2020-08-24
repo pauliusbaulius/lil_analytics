@@ -26,6 +26,8 @@ from logging.handlers import TimedRotatingFileHandler
 
 def setup_loggers():
     # TODO setup formatting, files, rotation, decorators. Explain which one to use in the green comment above.
+    # FIXME how do i log exceptions to error.log I really dont get how any of this works.
+    #logging.basicConfig(filename='data/logs/error.log', level=logging.ERROR)
 
     # General logger for all important logs.
     formatter = logging.Formatter('%(asctime)s:%(module)s:%(funcName)s:%(lineno)d:%(levelname)s:%(message)s')

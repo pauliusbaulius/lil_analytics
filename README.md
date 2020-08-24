@@ -121,6 +121,9 @@ Commands that can only be executed by the person who has the *sudo* rights in th
 
 .cogs
 	Print all available cogs from src/cogs.
+
+.shutdown
+    Turns off the bot.
 ```
 
 

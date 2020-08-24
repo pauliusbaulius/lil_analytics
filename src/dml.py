@@ -6,7 +6,6 @@ import discord
 from src.decorators import timer
 import src.sqlite as sqlite
 
-
 """
     This is the place where message metadata goes in, gets butchered and then inserted into the database.
     There are 8 tables at the moment. Database is build with build_database() function.
@@ -65,9 +64,10 @@ async def add_message_bulk(messages: list):
         except AttributeError:
             date_edited = None
 
-        to_insert_messages.append((message.id, message.guild.id, message.channel.id, message.author.id, message.author.name,
-                     len(message.clean_content), date, date_edited, message.author.bot, message.pinned,
-                     len(message.attachments), len(message.embeds), message.mention_everyone, 0))
+        to_insert_messages.append(
+            (message.id, message.guild.id, message.channel.id, message.author.id, message.author.name,
+             len(message.clean_content), date, date_edited, message.author.bot, message.pinned,
+             len(message.attachments), len(message.embeds), message.mention_everyone, 0))
 
     c.executemany(sql_channels, to_insert_channels)
     c.executemany(sql_messages, to_insert_messages)
@@ -106,15 +106,16 @@ async def add_message_metadata_bulk(messages: list):
 
     await add_reactions_bulk(messages)
 
+
 @timer
 async def add_reactions_bulk(messages: list):
-
     reactions = []
     message_ids = []
     for message in messages:
-        message_ids.append((message.id, ))
+        message_ids.append((message.id,))
         for reaction in message.reactions:
-            [reactions.append((reaction.message.id, str(reaction.emoji), user.id, hash(str(reaction.emoji)))) for user in await reaction.users().flatten()]
+            [reactions.append((reaction.message.id, str(reaction.emoji), user.id, hash(str(reaction.emoji)))) for user
+             in await reaction.users().flatten()]
 
     cn = sqlite.db_connection
     c = sqlite.db_cursor
@@ -307,27 +308,42 @@ async def reaction_clear_raw(payload: discord.RawReactionClearEvent):
 
 
 @timer
-async def background_parse_history(client: discord.Client, guild_id: int):
-    """Goes over all channels and parses yet non-parsed messages."""
+async def background_parse_history(client: discord.Client,
+                                   guild_id: int,
+                                   after: datetime.datetime.date = None) -> tuple:
+    """Goes over all channels and indexes messages. Adds missing messages to the database.
+
+    :param client: Discord client object.
+    :param guild_id: Id of the guild to be indexed.
+    :param after: Index messages up to this day. Default is None, all messages will be indexed.
+    :return: Amount of messages indexed and output message to the end user.
+    """
     guild = client.get_guild(int(guild_id))
     messages = 0
     channels = []
     for channel in guild.text_channels:
         channels.append(channel.name)
-        messages += await _parse_channel_history(channel)
+        # Try indexing, if for some reason permissions are missing, just skip that guild.
+        try:
+            messages += await _parse_channel_history(channel, after)
+        except discord.errors.Forbidden:
+            # TODO log it as error.
+            print(f"Could not index {guild_id} because of missing permissions... Skipping.")
+            pass
     return messages, ' '.join(channels)
 
 
 @timer
-async def _parse_channel_history(channel: discord.TextChannel) -> int:
+async def _parse_channel_history(channel: discord.TextChannel, after: datetime.datetime.date = None) -> int:
     """Uses discord.py history method to iterate channel's history from the newest to the oldest message.
 
     :param channel: Discord channel object to index.
+    :param after: Index messages up to this day. Default is None, all messages will be indexed.
     :return: Amount of messages iterated in channel's history.
     """
     messages = []
     message_counter = 0
-    async for message in channel.history(limit=None):
+    async for message in channel.history(limit=None, after=after):
         messages.append(message)
         message_counter += 1
         # Insert every 500 messages! This uses db connection every 500 messages instead of every single one!
@@ -345,8 +361,7 @@ async def _parse_channel_history(channel: discord.TextChannel) -> int:
 def add_reply(text: str):
     """Adds a new reply to bot_replies for bot to use.
 
-    Arguments:
-        text: Bot reply to add
+    :param text: Bot reply to add
     """
     cn = sqlite.db_connection
     c = sqlite.db_cursor
@@ -359,10 +374,8 @@ def add_reply(text: str):
 def get_reply() -> str:
     """Returns a random reply from bot_replies if there are any, otherwise it returns None.
 
-    Returns:
-        A single reply from bot_replies table in the database.
+    :return: A single reply from bot_replies table in the database.
     """
-    cn = sqlite.db_connection
     c = sqlite.db_cursor
     c.execute('SELECT message FROM bot_replies ORDER BY random() LIMIT 1')
     reply = c.fetchone()[0]

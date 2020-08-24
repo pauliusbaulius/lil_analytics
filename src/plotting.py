@@ -44,8 +44,10 @@ def plot_growth_message_days(guild_id: int, days: int, channel_id=None, user_id:
 
 
 @timer
-def plot_message_times(guild_id: int, channel_id: int = None, user_id: int = None, timezone: int = 0) -> "path to " \
-                                                                                                         "plot image":
+def plot_message_times(guild_id: int,
+                       channel_id: int = None,
+                       user_id: int = None,
+                       timezone: int = 0) -> "path to plot image":
     """Plots user messages per hour. Considers all messages from all channels. Generates a plot for 7, 30 and all days.
 
     shift_hour() shifts UTC time by given integer, so time in Berlin is UTC+2, Vilnius is UTC+3.
@@ -86,7 +88,14 @@ def plot_message_times(guild_id: int, channel_id: int = None, user_id: int = Non
 
 @timer
 def plot_message_times_today(guild_id: int, timezone: int = 0) -> "path to plot image":
-    # TODO like above but for this day, not 24.
+    """Plots messages by hour for this day. Not 24h but a day.
+
+    If it is 01am, it will only show statistics for messages from 00am to 01am inclusive.
+
+    :param timezone: UTC timezone offset.
+    :type guild_id: Integer id of the guild.
+    :return: A path to the plot image.
+    """
     data = db.get_messages_by_hour_today(guild_id=guild_id)
     x_val = [shift_hour(x[0], timezone) for x in data]
     y_val = [x[1] for x in data]
@@ -105,12 +114,6 @@ def barh_message_days(guild_id, days, channel_id=None, user_id=None) -> "path to
         y_val = [x[0] for x in data]
         x_val = [x[1] for x in data]
         return generate_barh(x_val, y_val, title=f"Messages last {days} days", xlabel="Messages")
-
-
-@timer
-def barh_messages_today():
-    # TODO like above but for this day! not 24h.
-    pass
 
 
 @timer

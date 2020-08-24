@@ -1,6 +1,7 @@
-import logging
+import datetime
 import os
 import sys
+from typing import List
 
 import discord
 from discord.ext import commands
@@ -8,9 +9,10 @@ from discord.ext import commands
 import src.ddl
 import src.dml as db
 import definitions
+from src import sqlite
 from src.decorators import timer
 from src.logger import setup_loggers
-from src.utils import find_word, is_owner
+from src.utils import find_word, is_owner, is_me
 
 # Load bot prefix from settings.json
 client = commands.Bot(command_prefix=commands.when_mentioned_or(definitions.command_prefix))
@@ -18,9 +20,9 @@ client.remove_command("help")
 
 
 def start_bot():
-    print("lil_analytics: Calling start_bot() in bot.py!")
+    print("lil analytics: Calling start_bot() in bot.py!")
 
-    print("lil_analytics: Adding src/ to syspath!")
+    print("lil analytics: Adding src/ to syspath!")
     sys.path.insert(0, os.path.join(definitions.root_dir, "src/"))
 
     print("lil analytics: Setting up logging.")
@@ -35,65 +37,58 @@ def start_bot():
         if filename.endswith(".py"):
             client.load_extension(f"cogs.{filename[:-3]}")
 
-    # print("Background indexing of messages in last 72h started!")
-    # Start background tasks # TODO should do on start? to get all missed messages during downtime. or do every 24h?
-    # client.loop.create_task(background_parser())
-    # Should iterate 72h worth of messages! if bot is offline for longer, use index!
-    # after=current_time-72h
-
     print("lil analytics: Connecting to Discord and starting the client...")
     client.run(definitions.bot_token)
 
 
 @client.event
 async def on_ready():
-    """This runs if everything goes right."""
+    """This runs if everything goes right. Starts background processes."""
     await client.change_presence(activity=discord.Game(name=definitions.status_message))
-    print("lil_analytics: Bot is now running!")
+    print("lil analytics: Bot is now running!")
+
+    print("lil analytics: Background indexing of messages in last 24h started!")
+    time_before = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
+    for guild_id in [g.id for g in client.guilds]:
+        await client.loop.create_task(db.background_parse_history(client=client, guild_id=guild_id, after=time_before))
 
 
 @timer
 @client.command()
 async def load(ctx, extension):
     """Loads cog from cogs folder."""
-    logging.info(
-        f"[{ctx.message.author.name}][{ctx.message.author.id}] trying to load [{extension}] cog.")
     if is_owner(ctx.message.author.id):
         try:
             client.load_extension(f"cogs.{extension}")
             await ctx.send(f"Loaded extension [{extension}]")
-            logging.info(
-                f"[{ctx.message.author.name}][{ctx.message.author.id}] loaded [{extension}] cog.")
         except ModuleNotFoundError:
             await ctx.send(f"Extension [{extension}] does not exist.")
-            logging.info(
-                f"[{ctx.message.author.name}][{ctx.message.author.id}] cog [{extension}] does not exist.")
     else:
         await ctx.send(f"You can't do this.")
-        logging.info(
-            f"[{ctx.message.author.name}][{ctx.message.author.id}] is not the owner.")
 
 
 @timer
 @client.command()
 async def unload(ctx, extension):
     """Unloads cog from cogs folder."""
-    logging.info(
-        f"[{ctx.message.author.name}][{ctx.message.author.id}] trying to unload [{extension}] cog.")
     if is_owner(ctx.message.author.id):
         try:
             client.unload_extension(f"cogs.{extension}")
             await ctx.send(f"Unloaded extension [{extension}]")
-            logging.info(
-                f"[{ctx.message.author.name}][{ctx.message.author.id}] unloaded [{extension}] cog.")
         except ModuleNotFoundError:
             await ctx.send(f"Extension [{extension}] does not exist.")
-            logging.info(
-                f"[{ctx.message.author.name}][{ctx.message.author.id}] cog [{extension}] does not exist.")
     else:
         await ctx.send(f"You can't do this.")
-        logging.info(
-            f"[{ctx.message.author.name}][{ctx.message.author.id}] is not the owner.")
+
+
+@client.command()
+async def shutdown(ctx):
+    """Stops bot and closes db connection. Can be executed by the owner only."""
+    if is_owner(ctx.message.author.id):
+        await ctx.send("`lil_analytics@matrix:~$ shutdown -h 'lol rip'`")
+        print("lil analytics: Shutting down...")
+        sqlite.close_connection()
+        await client.logout()
 
 
 @client.event
@@ -106,9 +101,8 @@ async def on_message(message):
         await db.add_message(message)
         return
 
-    # Check if message contains word "bot" or mentions this bot. Reply with a
-    # message if true.
-    if find_word(message.content.lower(), "lil analytics"):# or is_me(message.mentions):
+    # Check if message contains word "bot" or mentions this bot. Reply with a message if true.
+    if find_word(message.content.lower(), "lil analytics") or is_me(message.mentions):
         reply = db.get_reply()
         await message.channel.send(reply)
 
@@ -120,33 +114,23 @@ async def on_message(message):
 
 
 @client.event
-async def on_member_update(before, after):
-    """User activity tracking goes here.
-    Currently tracking Spotify listening activity.
-    """
-    for activity in after.activities:
-        if activity.type is discord.ActivityType.listening:
-            pass
-
-
-@client.event
-async def on_bulk_message_delete(messages):
+async def on_bulk_message_delete(messages: List[discord.Message]):
+    print("on_bulk_message_delete", messages)
     await db.message_bulk_delete(messages)
 
 
 @client.event
-async def on_raw_bulk_message_delete(
-        payload: discord.RawBulkMessageDeleteEvent):
+async def on_raw_bulk_message_delete(payload: discord.RawBulkMessageDeleteEvent):
     """Discord gives minimal amount of data, this will create holes in
     database if the server was not parsed with .parse_history first!"""
+    print("on_raw_bulk_message_delete", payload)
     await db.message_bulk_delete(payload.message_ids)
 
 
 @client.event
-async def on_message_delete(message):
-    """Updates database metadata for message.
-    Basically sets flag that message is gone and when it was deleted.
-    """
+async def on_message_delete(message: discord.Message):
+    """Updates database metadata for message. Sets flag that message is gone and when it was deleted."""
+    print("on_message_delete", message)
     await db.message_delete(message.id)
 
 
@@ -154,6 +138,7 @@ async def on_message_delete(message):
 async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
     """Discord gives minimal amount of data, this will create holes in
     database if the server was not parsed with .parse_history first!"""
+    print("on_raw_message_delete", payload)
     await db.message_delete(payload.message_id)
 
 
@@ -194,13 +179,14 @@ async def on_raw_reaction_remove(payload: discord.RawReactionActionEvent):
 
 @client.event
 async def on_reaction_clear(message, reactions):
-    """Updates database metadata for user reactions."""
-    await db.db_reaction_clear(message, reactions)
+    # TODO remove all reactions for message.id
+    print("on_reaction_clear", message)
 
 
 @client.event
 async def on_raw_reaction_clear(payload):
-    await db.db_reaction_clear_raw(payload)
+    # TODO remove all reactions for message.id
+    print("on_raw_reaction_clear ", payload)
 
 
 @client.event
@@ -212,4 +198,4 @@ async def on_reaction_clear_emoji(reaction):
 @client.event
 async def on_raw_reaction_clear_emoji(payload):
     # TODO remove all reactions for message.id
-    print("on_raw_reaction_clear_emoji ",payload)
+    print("on_raw_reaction_clear_emoji ", payload)
