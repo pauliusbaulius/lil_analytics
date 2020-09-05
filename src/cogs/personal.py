@@ -21,8 +21,7 @@ class Personal(commands.Cog):
                     await channel.set_permissions(role, send_messages=False)
             except discord.Forbidden:
                 return await ctx.send("I have no permissions to make a muted role.")
-
-        if not "silence" in laminatas.roles:
+        if not "silence" in [role.name for role in laminatas.roles]:
             await laminatas.add_roles(role)
             await ctx.send(f"Laminatas patylės lygiai {timeout} sekundes.")
             await asyncio.sleep(timeout)
