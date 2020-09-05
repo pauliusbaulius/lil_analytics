@@ -16,17 +16,21 @@ class Personal(commands.Cog):
         role = discord.utils.get(ctx.guild.roles, name="silence")
         if not role:
             try:
-                muted = await ctx.guild.create_role(name="silence", reason="Tvarka ir teisingumas. Laminatas tylus.")
+                role = await ctx.guild.create_role(name="silence", reason="Tvarka ir teisingumas. Laminatas tylus.")
                 for channel in ctx.guild.channels:
-                    await channel.set_permissions(muted, send_messages=False)
+                    await channel.set_permissions(role, send_messages=False)
             except discord.Forbidden:
                 return await ctx.send("I have no permissions to make a muted role.")
 
-        await laminatas.add_roles(muted)
-        await ctx.send(f"Laminatas patylės lygiai {timeout} sekundes.")
+        if not "silence" in laminatas.roles:
+            await laminatas.add_roles(role)
+            await ctx.send(f"Laminatas patylės lygiai {timeout} sekundes.")
+            await asyncio.sleep(timeout)
+            await laminatas.remove_roles(discord.utils.get(ctx.guild.roles, name="silence"))
+        else:
+            await ctx.send("Laminatas jau tyli...")
 
-        await asyncio.sleep(timeout)
-        await laminatas.remove_roles(discord.utils.get(ctx.guild.roles, name="silence"))
+
 
 
 def setup(client):
