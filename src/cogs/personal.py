@@ -11,7 +11,7 @@ class Personal(commands.Cog):
 
     @commands.command()
     async def silence(self, ctx):
-        laminatas = ctx.message.server.get_member(257945590799925249)
+        laminatas = ctx.message.guild.get_member(257945590799925249)
         timeout = random.randint(30, 240)
         role = discord.utils.get(ctx.guild.roles, name="silence")
         if not role:
