@@ -4,7 +4,7 @@ import time
 import discord
 from discord.ext import commands
 
-import definitions
+from bot import definitions
 
 
 class Admin(commands.Cog):

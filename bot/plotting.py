@@ -3,11 +3,11 @@ import io
 from matplotlib import pyplot as plt
 from matplotlib.ticker import PercentFormatter
 
-import src.dql as db
-from src.decorators import timer
-from src.dql import (get_channels_messages, get_messages_growth_days,
+import bot.dql as db
+from bot.decorators import timer
+from bot.dql import (get_channels_messages, get_messages_growth_days,
                      get_user_channel_activity, get_user_most_active)
-from src.utils import shift_hour
+from bot.utils import shift_hour
 
 
 """

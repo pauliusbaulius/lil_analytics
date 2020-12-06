@@ -5,7 +5,7 @@ Communication with the API.
 # TODO delete_ methods should send request to delete matching id.
 """
 
-from src import models
+from . import models
 
 
 async def add_user(user: models.User):
@@ -33,8 +33,8 @@ async def add_message(message):
                        is_pinned=message.pinned,
                        is_everyone_mention=message.mention_everyone,
                        is_deleted=0,
-                       mentions=list(set(message.raw_mentions)), # Prevent duplicate spam.
-                       channel_mentions=list(set(message.raw_channel_mentions)) # Prevent duplicate spam.
+                       mentions=list(set(message.raw_mentions)),  # Prevent duplicate spam.
+                       channel_mentions=list(set(message.raw_channel_mentions))  # Prevent duplicate spam.
                        )
     s = models.Server(server_id=message.guild.id,
                       name=message.guild.name,
@@ -49,7 +49,7 @@ async def add_message(message):
                        )
     u = models.User(user_id=message.author.id,
                     name=message.author.name,
-                    display_name=message.author.display_name,)
+                    display_name=message.author.display_name, )
     print(m, s, c, u)
 
 

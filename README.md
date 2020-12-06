@@ -4,13 +4,13 @@ Discord bot for server/user/channel analytics. Gathers message metadata and gene
 If you will run this bot from source, make sure to use `.index` first, to index your whole server. Parsing history takes a long time, and really depends on your hardware. Raspberry Pi Zero will work for a small server. Anything bigger requires better CPU.
 Commands generate compilation of statistics and send one embed together with additional stats:
 
-![server](data/media/readme/serverinfo.png)
+![server](bot/data/media/readme/serverinfo.png)
 
-![server](data/media/readme/server.png)
+![server](bot/data/media/readme/server.png)
 
-![channel](data/media/readme/channel.png)
+![channel](bot/data/media/readme/channel.png)
 
-![user](data/media/readme/user.png)
+![user](bot/data/media/readme/user.png)
 
 # Commands
 

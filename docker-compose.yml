@@ -1,0 +1,60 @@
+version: "3.2"
+
+# TODO non-root containers
+# https://docs.docker.com/compose/compose-file/#long-syntax-3
+# TODO setup volumes to "external user-accessible" directory that allows easy backups to b2
+
+services:
+  # https://github.com/sonyarianto/docker-compose-mongodb
+  mongo:
+    image: "mongo:latest"
+    restart: unless-stopped
+    container_name: "lil_analytics_mongo"
+    environment:
+      # FIXME does not take vars ${} for some reason?
+      - MONGO_INITDB_ROOT_USERNAME="admin"
+      - MONGO_INITDB_ROOT_PASSWORD="admin"
+      - PORT="${MONGO_PORT}:27017"
+    volumes:
+      - mongo_volume:/data/
+    networks:
+      - internal
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile_api
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    container_name: "lil_analytics_fastapi"
+    ports:
+    - "${FASTAPI_PORT}:5000"
+    networks:
+      - web
+
+  bot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile_bot
+    restart: unless-stopped
+    container_name: "lil_analytics_bot"
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - COMMAND_PREFIX=${COMMAND_PREFIX}
+      - STATUS_MESSAGE=${STATUS_MESSAGE}
+      - INVITE_LINK=${INVITE_LINK}
+      - GITHUB_LINK=${GITHUB_LINK}
+    ports:
+    - "80:80"
+    networks:
+      - web
+
+networks:
+  internal:
+    external: false
+  web:
+    external: true
+
+volumes:
+  mongo_volume:

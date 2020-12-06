@@ -8,8 +8,8 @@ from datetime import datetime
 
 from PIL import Image
 
-import definitions
-from src.decorators import timer
+from bot import definitions
+from bot.decorators import timer
 
 """
     Utility functions that are used by many cogs and modules.

@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
 
-from src import utils
-import definitions
+from bot import definitions
+
 
 class ToolsGeneral(commands.Cog):
 

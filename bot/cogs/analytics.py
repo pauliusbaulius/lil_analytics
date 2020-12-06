@@ -5,11 +5,11 @@ import discord
 import discord.errors
 from discord.ext import commands
 
-import src.dml as db
-import src.dql as query
-import src.plotting as plot
-import src.utils as utils
-from src.decorators import timer
+import bot as db
+import bot.dql as query
+from bot import plotting as plot
+import bot.utils as utils
+from bot.decorators import timer
 
 
 class Analysis(commands.Cog):

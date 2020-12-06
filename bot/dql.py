@@ -2,9 +2,9 @@ import datetime
 
 from dateutil import parser
 
-from src.decorators import timer
-from src.utils import get_database, sort_weekday
-import src.sqlite as sqlite
+from bot.decorators import timer
+from bot.utils import sort_weekday
+from bot import sqlite
 
 
 @timer

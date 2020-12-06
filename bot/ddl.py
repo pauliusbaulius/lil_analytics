@@ -1,4 +1,4 @@
-from src import sqlite
+from . import sqlite
 
 
 def build_database():

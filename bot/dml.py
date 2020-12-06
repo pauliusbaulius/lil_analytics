@@ -3,8 +3,8 @@ import re
 
 import discord
 
-from src.decorators import timer
-import src.sqlite as sqlite
+from bot.decorators import timer
+from bot import sqlite
 
 """
     This is the place where message metadata goes in, gets butchered and then inserted into the database.

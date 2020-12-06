@@ -129,9 +129,9 @@ dmypy.json
 .pyre/
 
 .idea
-definitions.py
+bot/definitions.py
 reports
 archive
-data/media/tmp
-data/databases
-data/logs
+bot/data/media/tmp
+bot/data/databases
+bot/data/logs

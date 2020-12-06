@@ -1,7 +1,7 @@
 import os
 import sqlite3
 
-import definitions
+from bot import definitions
 
 # ░░░░░░░░▀▀▀██████▄▄▄░░░░░░░░░░░░
 # ░░░░░░▄▄▄▄▄░░█████████▄░░░░░░░░░
