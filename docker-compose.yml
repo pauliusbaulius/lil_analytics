@@ -1,4 +1,4 @@
-version: "3.2"
+version: "3.7"
 
 # TODO non-root containers
 # https://docs.docker.com/compose/compose-file/#long-syntax-3
@@ -19,6 +19,8 @@ services:
       - MONGO_INITDB_DATABASE=lil_analytics
     ports:
       - "27017:27017"
+    networks:
+      - internal
 
   api:
     build:

@@ -1,8 +1,5 @@
 FROM python:3.8-slim-buster
 
-#COPY Pipfile Pipfile.lock bot/
-#WORKDIR bot/
-
 EXPOSE 80
 
 RUN pip install pipenv
