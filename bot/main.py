@@ -117,6 +117,7 @@ async def on_message(message):
     u = models.User(user_id=message.author.id,
                     name=message.author.name,
                     display_name=message.author.display_name,
+                    is_bot=message.author.bot
                     )
 
     await api.add_server(s)

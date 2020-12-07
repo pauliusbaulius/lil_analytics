@@ -17,6 +17,7 @@ class User(BaseModel):
     # FIXME Problem if bot runs in multiple servers with same users, race condition...
     #  use nick, since it is global!
     display_name: str
+    is_bot: bool
 
 
 class Server(BaseModel):
@@ -39,7 +40,6 @@ class Reaction(BaseModel):
     reaction_id: str
     reaction_hash: int
     reacted_id: int
-
 
 
 # noinspection PyRedeclaration
