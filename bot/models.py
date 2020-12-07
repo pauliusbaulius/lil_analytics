@@ -10,13 +10,8 @@ from typing import List, Optional, Any
 
 from pydantic import BaseModel
 
-
-class Message(BaseModel):
-    # Blank model for Python' one-pass-evaluation.
-    pass
-
-
 class User(BaseModel):
+    # TODO should iterate all users on boot and add new on events! on_join
     user_id: int
     name: str
     # FIXME Problem if bot runs in multiple servers with same users, race condition...
@@ -40,11 +35,14 @@ class Channel(BaseModel):
 
 
 class Reaction(BaseModel):
-    message_id: Message
+    message_id: int
     reaction_id: str
     reaction_hash: int
+    reacted_id: int
 
 
+
+# noinspection PyRedeclaration
 class Message(BaseModel):
     """
     More fields can be found: https://discordpy.readthedocs.io/en/latest/api.html#message
@@ -59,7 +57,6 @@ class Message(BaseModel):
     length: int
     # content: str # TODO store content for API extraction? use message.clean_content
     attachments: Optional[List[str]]
-    is_bot: bool
     is_pinned: bool
     is_everyone_mention: bool
     is_deleted: bool

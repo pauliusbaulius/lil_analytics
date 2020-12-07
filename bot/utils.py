@@ -1,8 +1,9 @@
+"""
+Utility functions that are used by many cogs and modules.
+"""
+
 import datetime
 import io
-import json
-import os
-import random
 import time
 from datetime import datetime
 
@@ -10,18 +11,6 @@ from PIL import Image
 
 from bot import definitions
 from bot.decorators import timer
-
-"""
-    Utility functions that are used by many cogs and modules.
-"""
-
-
-@DeprecationWarning
-def load_settings():
-    config_path = os.path.join(definitions.root_dir, 'settings.json')
-    with open(config_path) as json_file:
-        settings = json.load(json_file)
-    return settings
 
 
 def get_current_time() -> str:
@@ -54,20 +43,6 @@ def is_owner(user_id: "user id as integer") -> bool:
     account for bots and use different account for personal use. This solves it.
     """
     return user_id == definitions.sudoer
-
-
-@DeprecationWarning
-def generate_graph_path_filename() -> "path and filename for a temporary file":
-    path = os.path.join(definitions.root_dir, definitions.temporary_dir)
-    now = str(datetime.now().strftime("%Y%m%d%H%M%S"))
-    random_number = random.randint(10000, 100000)
-    return os.path.join(path, f"{now}_{random_number}.png")
-
-
-@DeprecationWarning
-def get_database() -> "path to database":
-    """Returns database path from config with the right path."""
-    return os.path.join(definitions.root_dir, definitions.database)
 
 
 @timer

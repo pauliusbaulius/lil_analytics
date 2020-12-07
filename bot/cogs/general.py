@@ -15,13 +15,7 @@ class ToolsGeneral(commands.Cog):
         embed = discord.Embed(title="General Commands",
                               description=f'You can find out more [here]({definitions.github_link}).',
                               color=0x008000)
-        embed.add_field(name="server", value="Server statistics.")
-        embed.add_field(name="channel",
-                        value="Channel statistics. Tag a channel. Give integer for timezone. Berlin is +2.")
-        embed.add_field(name="user", value="User statistics. Tag a user. Give integer for timezone. Berlin is +2.")
-        embed.add_field(name="today", value="Daily statistics. Give integer for timezone. Berlin is +2.")
         embed.add_field(name="info", value="Information about lil analytics.")
-        embed.add_field(name="functions/help/h", value="Prints this message.")
         embed.add_field(name="avatar", value="Avatars of tagged user(s), empty call returns your picture.")
         embed.add_field(name="userinfo", value="Information about tagged user(s).")
         await ctx.send(embed=embed)

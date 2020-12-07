@@ -4,8 +4,7 @@ from timeit import default_timer
 import discord
 import discord.errors
 from discord.ext import commands
-
-import bot as db
+from bot import dml as db
 import bot.dql as query
 from bot import plotting as plot
 import bot.utils as utils
