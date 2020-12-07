@@ -3,7 +3,6 @@ FROM python:3.8-alpine
 WORKDIR api/
 COPY api/ api/
 
-# TODO install from pipenv? Would have to split pipfile...
 RUN pip install fastapi uvicorn
 
 EXPOSE 5000
