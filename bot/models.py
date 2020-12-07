@@ -10,6 +10,7 @@ from typing import List, Optional, Any
 
 from pydantic import BaseModel
 
+
 class User(BaseModel):
     # TODO should iterate all users on boot and add new on events! on_join
     user_id: int
