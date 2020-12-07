@@ -6,20 +6,19 @@ version: "3.2"
 
 services:
   # https://github.com/sonyarianto/docker-compose-mongodb
+  # https://zgadzaj.com/development/docker/docker-compose/containers/mongodb
   mongo:
-    image: "mongo:latest"
-    restart: unless-stopped
-    container_name: "lil_analytics_mongo"
-    environment:
-      # FIXME does not take vars ${} for some reason?
-      - MONGO_INITDB_ROOT_USERNAME="admin" #${MONGO_USER}
-      - MONGO_INITDB_ROOT_PASSWORD="admin" #${MONGO_PASSWORD}
-    ports:
-    - "${MONGO_PORT}:27017"
+    image: mongo:latest
+    container_name: mongodb
+    hostname: mongodb
     volumes:
-      - mongo_volume:/data/
-    networks:
-      - internal
+      - ./docker/mongodb/data/db/:/data/db/
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+      - MONGO_INITDB_DATABASE=lil_analytics
+    ports:
+      - "27017:27017"
 
   api:
     build:
@@ -60,5 +59,3 @@ networks:
   web:
     external: true
 
-volumes:
-  mongo_volume:

@@ -135,3 +135,6 @@ archive
 bot/data/media/tmp
 bot/data/databases
 bot/data/logs
+
+# Ignore database data!
+docker/mongodb
