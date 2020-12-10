@@ -1,7 +1,7 @@
+import os
+
 import discord
 from discord.ext import commands
-
-from bot import definitions
 
 
 class ToolsGeneral(commands.Cog):
@@ -13,7 +13,7 @@ class ToolsGeneral(commands.Cog):
     @commands.command(aliases=["help", "h"])
     async def functions(self, ctx):
         embed = discord.Embed(title="General Commands",
-                              description=f'You can find out more [here]({definitions.github_link}).',
+                              description=f'You can find out more [here]({os.environ["GITHUB_LINK"]}).',
                               color=0x008000)
         embed.add_field(name="info", value="Information about lil analytics.")
         embed.add_field(name="avatar", value="Avatars of tagged user(s), empty call returns your picture.")
@@ -22,7 +22,7 @@ class ToolsGeneral(commands.Cog):
 
         # Fun commands
         embed = discord.Embed(title="Fun Commands",
-                              description=f'You can find out more [here]({definitions.github_link}).',
+                              description=f'You can find out more [here]({os.environ["GITHUB_LINK"]}).',
                               color=0x0000ff)
         embed.add_field(name="b", value="Makes bot say your text in next generation caps.")
         embed.add_field(name="choose/c", value="Random pick from your inputs separated by ';'.")
@@ -31,14 +31,14 @@ class ToolsGeneral(commands.Cog):
 
         # Administration commands
         embed = discord.Embed(title="Administration Commands",
-                              description=f'You can find out more [here]({definitions.github_link}).',
+                              description=f'You can find out more [here]({os.environ["INVITE_LINK"]}).',
                               color=0xff0000)
         embed.add_field(name="kick", value="Kicks mentioned user. Can pass a reason.")
         embed.add_field(name="ban", value="Bans mentioned user. Can pass a reason.")
         embed.add_field(name="clear", value="Takes number or 'all' as argument. Deletes messages.")
         embed.add_field(name="gdpr", value="Deletes all messages in the channel made by the mentioned user.")
-        embed.add_field(name="export", value="Exports all messages in the server made by the mentioned user. "
-                                             "Can give be given a limit. Otherwise exports all messages.")
+        #embed.add_field(name="export", value="Exports all messages in the server made by the mentioned user. "
+        #                                     "Can give be given a limit. Otherwise exports all messages.")
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -51,8 +51,8 @@ class ToolsGeneral(commands.Cog):
         embed.add_field(name="Author:", value="pauliusbaulius", inline=False)
         # Shows the number of servers the bot is member of.
         embed.add_field(name="Server count:", value=f"{len(self.client.guilds)}", inline=False)
-        embed.add_field(name="Invite me:", value=f'[>click me<]({definitions.invite_link})', inline=False)
-        embed.add_field(name="Source code:", value=f'[>click me<]({definitions.github_link})', inline=False)
+        embed.add_field(name="Invite me:", value=f'[>click me<]({os.environ["INVITE_LINK"]})', inline=False)
+        embed.add_field(name="Source code:", value=f'[>click me<]({os.environ["GITHUB_LINK"]})', inline=False)
         await ctx.send(embed=embed)
 
     @commands.command()

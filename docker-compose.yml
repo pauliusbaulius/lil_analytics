@@ -1,34 +1,13 @@
 version: "3.7"
 
-# TODO non-root containers
-# https://docs.docker.com/compose/compose-file/#long-syntax-3
-# TODO setup volumes to "external user-accessible" directory that allows easy backups to b2
-
 services:
-  # https://github.com/sonyarianto/docker-compose-mongodb
-  # https://zgadzaj.com/development/docker/docker-compose/containers/mongodb
-  mongo:
-    image: mongo:latest
-    container_name: mongodb
-    hostname: mongodb
-    volumes:
-      - ./docker/mongodb/data/db/:/data/db/
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-      - MONGO_INITDB_DATABASE=lil_analytics
-    ports:
-      - "27017:27017"
-    networks:
-      - internal
-
   api:
     build:
       context: .
       dockerfile: docker/Dockerfile_api
     restart: unless-stopped
-    depends_on:
-      - mongo
+    volumes:
+      - ./docker/sqlite/:/db/ # see api/database.py, sqlite is mounted in /db/lil_analytics.db
     container_name: "lil_analytics_fastapi"
     environment:
       - MONGO_USER=${MONGO_USER}

@@ -129,7 +129,6 @@ dmypy.json
 .pyre/
 
 .idea
-bot/definitions.py
 reports
 archive
 bot/data/media/tmp
@@ -137,4 +136,4 @@ bot/data/databases
 bot/data/logs
 
 # Ignore database data!
-docker/mongodb
+docker/sqlite

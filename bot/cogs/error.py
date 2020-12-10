@@ -17,22 +17,22 @@ class ErrorHandler(commands.Cog):
         error = getattr(error, "original", error)
 
         if isinstance(error, ignored):
-            return await ctx.send("You gave me bad arguments! Read .help and try again <:fingerguns:667671935479578634>")
+            return await ctx.send("You gave me bad arguments!")
 
         elif isinstance(error, commands.CommandOnCooldown):
             return await ctx.send(f"This command is on a cooldown. Try again in {int(error.retry_after)} second(s).")
 
         elif isinstance(error, commands.MissingPermissions):
-            return await ctx.send("You do not have the permission to use this command <:fingerguns:667671935479578634>")
+            return await ctx.send("You do not have the permission to use this command.")
 
         elif isinstance(error, commands.CommandNotFound):
             pass
 
         elif isinstance(error, commands.BadArgument):
-            return await ctx.send("You gave me bad arguments! Read .help and try again <:fingerguns:667671935479578634>")
+            return await ctx.send("You gave me bad arguments!")
 
         elif isinstance(error, commands.CommandInvokeError):
-            return await ctx.send("Bad argument, try again. <:fingerguns:667671935479578634>")
+            return await ctx.send("Bad argument, try again.")
 
 
 # Add cog to client.

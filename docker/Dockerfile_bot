@@ -1,3 +1,5 @@
+# TODO non-root containers
+
 FROM python:3.8-slim-buster
 
 EXPOSE 80
@@ -17,5 +19,7 @@ ENV STATUS_MESSAGE ${STATUS_MESSAGE}
 ENV INVITE_LINK ${INVITE_LINK}
 ENV GITHUB_LINK ${GITHUB_LINK}
 ENV PYTHONPATH "${PYTHONPATH}:/bot"
+ENV BOT_OWNER_ID ${BOT_OWNER_ID}
+ENV BOT_ID ${BOT_ID}
 
 CMD ["python3", "-u", "bot/main.py"]

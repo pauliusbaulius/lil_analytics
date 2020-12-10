@@ -5,13 +5,12 @@ name = "pypi"
 
 [packages]
 discord = "*"
-matplotlib = ">=3.2.2"
 python-dateutil = ">=2.8.1"
-Pillow = ">=7.2.0"
 pydantic = "*"
 fastapi = "*"
 uvicorn = "*"
-pymongo = "*"
+requests = "*"
+sqlalchemy = "*"
 
 [dev-packages]
 
