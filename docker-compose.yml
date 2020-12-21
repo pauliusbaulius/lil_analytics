@@ -6,6 +6,9 @@ services:
       context: .
       dockerfile: api/Dockerfile
     restart: unless-stopped
+    environment:
+      - FASTAPI_KEY=${FASTAPI_KEY}
+      - DOMAIN=${DOMAIN}
     volumes:
       # See api/database.py, sqlite is mounted in /db/lil_analytics.db
       - ./docker/sqlite/:/db/
@@ -26,6 +29,7 @@ services:
       - STATUS_MESSAGE=${STATUS_MESSAGE}
       - INVITE_LINK=${INVITE_LINK}
       - GITHUB_LINK=${GITHUB_LINK}
+      - FASTAPI_KEY=${FASTAPI_KEY}
     ports:
     - "${BOT_PORT}:80"
     networks:

@@ -1,33 +1,39 @@
 """
 Communication with the API. add_ should be used to update information. MongoDB can "upsert".
 """
+import os
+
 import requests
 
 from . import models
 
+# FIXME this is a shit quality solution
+API_KEY=f"?api_key={os.environ['FASTAPI_KEY']}"
+
+
 async def add_server(server: models.Server):
     try:
-        _ = requests.post(url="http://api:5000/server/", data=server.json())
+        _ = requests.post(url="http://api:5000/server/" + API_KEY, data=server.json())
     except AttributeError:
         print(server)
 
 async def add_channel(channel: models.Channel):
     try:
-        _ = requests.post(url="http://api:5000/channel/", data=channel.json())
+        _ = requests.post(url="http://api:5000/channel/" + API_KEY, data=channel.json())
     except AttributeError:
         print(channel)
 
 
 async def add_user(user: models.User):
     try:
-        r = requests.post(url="http://api:5000/user/", data=user.json())
+        r = requests.post(url="http://api:5000/user/" + API_KEY, data=user.json())
     except AttributeError:
         print(r.json())
 
 
 async def add_message(message: models.Message):
     try:
-        r = requests.post(url="http://api:5000/message/", data=message.json())
+        r = requests.post(url="http://api:5000/message/" + API_KEY, data=message.json())
     except AttributeError:
         print(r.json())
 
@@ -36,23 +42,23 @@ async def delete_message(message_id: int):
     """
     Called by on_message_delete, on_bulk_message_delete, on_raw_bulk_message_delete, on_raw_message_delete
     """
-    _ = requests.delete(url=f"http://api:5000/message/?message_id={message_id}")
+    _ = requests.delete(url=f"http://api:5000/message/?message_id={message_id}" + "&" + API_KEY)
 
 
 async def add_attachment(a: models.Attachment):
     try:
-        _ = requests.post(url="http://api:5000/attachment/", data=a.json())
+        _ = requests.post(url="http://api:5000/attachment/" + API_KEY, data=a.json())
     except AttributeError:
         print(a)
 
 
 async def delete_attachments(message_id: int):
-    _ = requests.delete(url=f"http://api:5000/attachment/?message_id={message_id}")
+    _ = requests.delete(url=f"http://api:5000/attachment/?message_id={message_id}" + "&" + API_KEY)
 
 
 async def add_reaction(reaction: models.Reaction):
     try:
-        _ = requests.post(url="http://api:5000/reaction/", data=reaction.json())
+        _ = requests.post(url="http://api:5000/reaction/" + API_KEY, data=reaction.json())
     except AttributeError:
         print(reaction)
 
@@ -80,4 +86,4 @@ async def delete_reactions(message_id: int):
 
 
 async def delete_channel(channel_id: int):
-    _ = requests.delete(url=f"http://api:5000/channel/?channel_id={channel_id}")
+    _ = requests.delete(url=f"http://api:5000/channel/?channel_id={channel_id}" + "&" + API_KEY)
