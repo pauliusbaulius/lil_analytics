@@ -1,8 +1,12 @@
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
-
+import datetime
 from sqlalchemy.orm import Session
+from starlette.requests import Request
+from starlette.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from starlette.staticfiles import StaticFiles
 
 from api import crud, models, schemas
 from api.database import SessionLocal, engine
@@ -10,6 +14,8 @@ from api.database import SessionLocal, engine
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="api/static"), name="static")
+templates = Jinja2Templates(directory="api/templates")
 
 
 def get_db():
@@ -20,6 +26,9 @@ def get_db():
         db.close()
 
 
+@app.get("/", response_class=HTMLResponse)
+def index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request, "timestamp": datetime.datetime.utcnow()})
 """
     SERVER
 """

@@ -4,7 +4,7 @@ FROM python:3.8-alpine
 
 EXPOSE 5000
 
-RUN pip install fastapi uvicorn sqlalchemy
+RUN pip install fastapi uvicorn sqlalchemy jinja2 aiofiles
 
 WORKDIR api/
 
