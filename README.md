@@ -10,6 +10,13 @@ Also displays nice graphs that make you feel informed and productive.
 
 \<insert images here\>
 
+## todo
+- [ ] api and bot should have separate pipenvs
+- [ ] non-root docker containers
+- [ ] github actions for that free container build, lint and test
+- [ ] logging
+- [ ] loki exporter example for your docker spyware stack
+
 ## install && deploy
 1. Create and fill out env file: `$ mv .env.example .env`
 2. Run `$ docker-compose up -d`.

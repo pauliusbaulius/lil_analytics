@@ -1,5 +1,5 @@
-from typing import List, Optional
 import datetime
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -10,12 +10,15 @@ class ServerBase(BaseModel):
     owner_id: int
     is_deleted: bool
 
+
 class ServerCreate(ServerBase):
     pass
+
 
 class Server(ServerCreate):
     class Config:
         orm_mode = True
+
 
 class ChannelBase(BaseModel):
     id: int
@@ -24,12 +27,15 @@ class ChannelBase(BaseModel):
     position: int
     is_deleted: bool
 
+
 class ChannelCreate(ChannelBase):
     pass
+
 
 class Channel(ChannelCreate):
     class Config:
         orm_mode = True
+
 
 class UserBase(BaseModel):
     id: int
@@ -37,21 +43,26 @@ class UserBase(BaseModel):
     display_name: str
     is_bot: bool
 
+
 class UserCreate(UserBase):
     pass
 
+
 class User(UserCreate):
-    #messages = Optional[List[Message]]
-    #mentioned_in = Optional[List[Message]]
+    # messages = Optional[List[Message]]
+    # mentioned_in = Optional[List[Message]]
     class Config:
         orm_mode = True
+
 
 class AttachmentBase(BaseModel):
     message_id: int
     url: str
 
+
 class AttachmentCreate(AttachmentBase):
     pass
+
 
 class Attachment(AttachmentCreate):
     class Config:
@@ -65,37 +76,12 @@ class ReactionBase(BaseModel):
     reaction_hash: int
     is_deleted: bool
 
+
 class ReactionCreate(ReactionBase):
     pass
 
+
 class Reaction(ReactionCreate):
-    class Config:
-        orm_mode = True
-
-class MentionBase(BaseModel):
-    message_id: int
-    mentioned_id: int
-
-
-class MentionCreate(MentionBase):
-    pass
-
-
-class Mention(MentionCreate):
-    class Config:
-        orm_mode = True
-
-
-class ChannelMentionBase(BaseModel):
-    message_id: int
-    mentioned_id: int
-
-
-class ChannelMentionCreate(MentionBase):
-    pass
-
-
-class ChannelMention(MentionCreate):
     class Config:
         orm_mode = True
 
@@ -120,10 +106,7 @@ class MessageBase(MessageCreate):
 
 
 class Message(MessageBase):
-    # TODO add attachments and etc...
     attachments: Optional[List[Attachment]]
-    mentions: Optional[List[Mention]]
-    channel_mentions: Optional[List[ChannelMention]]
     author: User = None
     channel: Channel = None
     server: Server = None
@@ -133,4 +116,3 @@ class Message(MessageBase):
 
     class Config:
         orm_mode = True
-

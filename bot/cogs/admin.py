@@ -5,22 +5,32 @@ import discord
 from discord.ext import commands
 
 
-
 class Admin(commands.Cog):
-
     def __init__(self, client):
         self.client = client
 
     @commands.has_permissions(kick_members=True)
     @commands.command()
-    async def kick(self, ctx, member: discord.Member, *, reason="My dad used to kick my ass too :,)"):
+    async def kick(
+        self,
+        ctx,
+        member: discord.Member,
+        *,
+        reason="My dad used to kick my ass too :,)",
+    ):
         """Kicks mentioned user(s) from the server."""
         await member.kick(reason=reason)
         await ctx.send(f"lil_analytics@matrix: {member} > /dev/null")
 
     @commands.has_permissions(ban_members=True)
     @commands.command()
-    async def ban(self, ctx, member: discord.Member, *, reason="You wake up from the simulation..."):
+    async def ban(
+        self,
+        ctx,
+        member: discord.Member,
+        *,
+        reason="You wake up from the simulation...",
+    ):
         """Bans mentioned user(s) from the server."""
         await member.ban(reason=reason)
         await ctx.send(f"lil_analytics@matrix: {member} > /dev/null")
@@ -31,13 +41,19 @@ class Admin(commands.Cog):
         """Deletes given amount of messages from the channel. Keyword 'all' deletes all messages."""
         try:
             if int(amount) > 0:
-                await ctx.channel.purge(limit=int(amount) + 1)  # +1 to delete the .clear message too.
-                await ctx.send(f'Permanently removed {amount} message(s) in this channel.')
+                await ctx.channel.purge(
+                    limit=int(amount) + 1
+                )  # +1 to delete the .clear message too.
+                await ctx.send(
+                    f"Permanently removed {amount} message(s) in this channel."
+                )
 
         except ValueError:
             if amount == "all":
                 await ctx.channel.purge(limit=None)
-                await ctx.channel.send(f"Press F for this channel. All messages have been nuked.")
+                await ctx.channel.send(
+                    f"Press F for this channel. All messages have been nuked."
+                )
 
     @commands.has_permissions(administrator=True)
     @commands.command()
@@ -50,8 +66,10 @@ class Admin(commands.Cog):
                 counter += 1
                 await message.delete(delay=None)
         aft = time.time()
-        await ctx.send(f"Deleted {counter} message(s) by {member} in "
-                       f"{time.strftime('%H:%M:%S', time.gmtime(int(aft - bef)))}.")
+        await ctx.send(
+            f"Deleted {counter} message(s) by {member} in "
+            f"{time.strftime('%H:%M:%S', time.gmtime(int(aft - bef)))}."
+        )
 
     # @commands.has_permissions(administrator=True)
     # @commands.command()

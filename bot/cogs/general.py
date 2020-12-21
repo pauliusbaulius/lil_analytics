@@ -12,32 +12,52 @@ class ToolsGeneral(commands.Cog):
 
     @commands.command(aliases=["help", "h"])
     async def functions(self, ctx):
-        embed = discord.Embed(title="General Commands",
-                              description=f'You can find out more [here]({os.environ["GITHUB_LINK"]}).',
-                              color=0x008000)
+        embed = discord.Embed(
+            title="General Commands",
+            description=f'You can find out more [here]({os.environ["GITHUB_LINK"]}).',
+            color=0x008000,
+        )
         embed.add_field(name="info", value="Information about lil analytics.")
-        embed.add_field(name="avatar", value="Avatars of tagged user(s), empty call returns your picture.")
+        embed.add_field(
+            name="avatar",
+            value="Avatars of tagged user(s), empty call returns your picture.",
+        )
         embed.add_field(name="userinfo", value="Information about tagged user(s).")
         await ctx.send(embed=embed)
 
         # Fun commands
-        embed = discord.Embed(title="Fun Commands",
-                              description=f'You can find out more [here]({os.environ["GITHUB_LINK"]}).',
-                              color=0x0000ff)
-        embed.add_field(name="b", value="Makes bot say your text in next generation caps.")
-        embed.add_field(name="choose/c", value="Random pick from your inputs separated by ';'.")
-        embed.add_field(name="8ball", value="The classic 8ball game, is there more to say?")
+        embed = discord.Embed(
+            title="Fun Commands",
+            description=f'You can find out more [here]({os.environ["GITHUB_LINK"]}).',
+            color=0x0000FF,
+        )
+        embed.add_field(
+            name="b", value="Makes bot say your text in next generation caps."
+        )
+        embed.add_field(
+            name="choose/c", value="Random pick from your inputs separated by ';'."
+        )
+        embed.add_field(
+            name="8ball", value="The classic 8ball game, is there more to say?"
+        )
         await ctx.send(embed=embed)
 
         # Administration commands
-        embed = discord.Embed(title="Administration Commands",
-                              description=f'You can find out more [here]({os.environ["INVITE_LINK"]}).',
-                              color=0xff0000)
+        embed = discord.Embed(
+            title="Administration Commands",
+            description=f'You can find out more [here]({os.environ["INVITE_LINK"]}).',
+            color=0xFF0000,
+        )
         embed.add_field(name="kick", value="Kicks mentioned user. Can pass a reason.")
         embed.add_field(name="ban", value="Bans mentioned user. Can pass a reason.")
-        embed.add_field(name="clear", value="Takes number or 'all' as argument. Deletes messages.")
-        embed.add_field(name="gdpr", value="Deletes all messages in the channel made by the mentioned user.")
-        #embed.add_field(name="export", value="Exports all messages in the server made by the mentioned user. "
+        embed.add_field(
+            name="clear", value="Takes number or 'all' as argument. Deletes messages."
+        )
+        embed.add_field(
+            name="gdpr",
+            value="Deletes all messages in the channel made by the mentioned user.",
+        )
+        # embed.add_field(name="export", value="Exports all messages in the server made by the mentioned user. "
         #                                     "Can give be given a limit. Otherwise exports all messages.")
         await ctx.send(embed=embed)
 
@@ -47,12 +67,22 @@ class ToolsGeneral(commands.Cog):
         """Prints information about the bot. Sends an embedded message."""
         # Get links from settings.json
         desc = "Message metadata analytics for your server! Type .help or .h to see all available commands."
-        embed = discord.Embed(title="lil analytics", description=desc, color=0xffff00)
+        embed = discord.Embed(title="lil analytics", description=desc, color=0xFFFF00)
         embed.add_field(name="Author:", value="pauliusbaulius", inline=False)
         # Shows the number of servers the bot is member of.
-        embed.add_field(name="Server count:", value=f"{len(self.client.guilds)}", inline=False)
-        embed.add_field(name="Invite me:", value=f'[>click me<]({os.environ["INVITE_LINK"]})', inline=False)
-        embed.add_field(name="Source code:", value=f'[>click me<]({os.environ["GITHUB_LINK"]})', inline=False)
+        embed.add_field(
+            name="Server count:", value=f"{len(self.client.guilds)}", inline=False
+        )
+        embed.add_field(
+            name="Invite me:",
+            value=f'[>click me<]({os.environ["INVITE_LINK"]})',
+            inline=False,
+        )
+        embed.add_field(
+            name="Source code:",
+            value=f'[>click me<]({os.environ["GITHUB_LINK"]})',
+            inline=False,
+        )
         await ctx.send(embed=embed)
 
     @commands.command()
@@ -118,9 +148,11 @@ async def send_user(ctx, mentioned_id):
     join_date = str(join_date)[:16]
     created_date = mentioned_id.created_at
     created_date = str(created_date)[:16]
-    status_message = f"Desktop: {mentioned_id.desktop_status}\n " \
-                     f"Mobile: {mentioned_id.mobile_status}\n " \
-                     f"Web: {mentioned_id.web_status}"
+    status_message = (
+        f"Desktop: {mentioned_id.desktop_status}\n "
+        f"Mobile: {mentioned_id.mobile_status}\n "
+        f"Web: {mentioned_id.web_status}"
+    )
 
     # Create embedding.
     embed = discord.Embed(title=f"{mentioned_id}", color=mentioned_id.colour)
@@ -142,7 +174,11 @@ async def send_user(ctx, mentioned_id):
         elif activity.type is discord.ActivityType.watching:
             print(activity.name)
         elif activity.type is discord.ActivityType.custom:
-            embed.add_field(name="Custom status:", value=f"{activity.emoji} {activity.name}", inline=False)
+            embed.add_field(
+                name="Custom status:",
+                value=f"{activity.emoji} {activity.name}",
+                inline=False,
+            )
     embed.set_image(url=mentioned_id.avatar_url)
     await ctx.send(embed=embed)
 

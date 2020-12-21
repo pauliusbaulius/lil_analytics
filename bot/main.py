@@ -6,14 +6,14 @@ from typing import List
 import discord
 from discord.ext import commands
 
-from bot import api
+from bot import api, models
 from bot.decorators import timer
 from bot.root import ROOT_DIR
 from bot.utils import is_owner
 
-from bot import models
-
-client = commands.Bot(command_prefix=commands.when_mentioned_or(os.environ["COMMAND_PREFIX"]))
+client = commands.Bot(
+    command_prefix=commands.when_mentioned_or(os.environ["COMMAND_PREFIX"])
+)
 client.remove_command("help")
 
 
@@ -38,12 +38,15 @@ def start_bot():
 @client.event
 async def on_ready():
     # This runs if everything goes right. Starts background processes.
-    await client.change_presence(activity=discord.Game(name=os.environ["STATUS_MESSAGE"]))  # Add status message.
+    await client.change_presence(
+        activity=discord.Game(name=os.environ["STATUS_MESSAGE"])
+    )  # Add status message.
     print("lil analytics: Bot is now running!")
 
     print("lil analytics: Background indexing of messages in last 24h started!")
     time_before = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
-    #for guild_id in [g.id for g in client.guilds]:
+    # TODO enable when old message parsing is decent
+    # for guild_id in [g.id for g in client.guilds]:
     #    await client.loop.create_task(background_parse_history(client=client, guild_id=guild_id, after=time_before))
 
 
@@ -72,22 +75,6 @@ async def unload(ctx, extension):
 
 
 @client.event
-async def on_message(message):
-    """This is where you can add functions that react to user messages that
-    are not direct commands. """
-
-    # Prevent recursive calls.
-    if message.author == client.user:
-        await addmsg(message)
-        return
-
-    await addmsg(message)
-
-    # Handle other commands.
-    await client.process_commands(message)
-
-
-@client.event
 async def on_bulk_message_delete(messages: List[discord.Message]):
     for message in messages:
         await api.delete_message(message.id)
@@ -109,72 +96,72 @@ async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
     await api.delete_message(payload.message_id)
 
 
+"""
+    MESSAGE HANDLING
+"""
+
+
+@client.event
+async def on_message(message):
+    """This is where you can add functions that react to user messages that
+    are not direct commands."""
+
+    # Prevent recursive calls.
+    if message.author == client.user:
+        await parse_message(message)
+        return
+
+    await parse_message(message)
+
+    # Handle other commands.
+    await client.process_commands(message)
+
+
 @client.event
 async def on_message_edit(_, after):
-    # m = models.Message(message_id=after.id,
-    #                    author_id=after.author.id,
-    #                    channel_id=after.channel.id,
-    #                    server_id=after.guild.id,
-    #                    date_utc=after.created_at,
-    #                    date_last_edited_utc=after.edited_at,
-    #                    length=len(after.clean_content),
-    #                    #attachments=[x.url for x in after.attachments],
-    #                    is_pinned=after.pinned,
-    #                    is_everyone_mention=after.mention_everyone,
-    #                    is_deleted=0,
-    #                    #mentions=list(set(after.raw_mentions)),  # Prevent duplicate spam.
-    #                    #channel_mentions=list(set(after.raw_channel_mentions))  # Prevent duplicate spam.
-    #                    )
-    await addmsg(after)
+    await parse_message(after)
 
 
 @client.event
 async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
-    # TODO API do not add to db if does not exist? Or try adding...
     d = payload.data
-    # print("payload data", d)
-    #
-    # s = models.Server(id=d["guild_id"],
-    #                   name=message.guild.name,
-    #                   is_deleted=False,
-    #                   owner_id=message.guild.owner_id
-    #                   )
-    #
+    # TODO-FEATURE would work if other params would be optional ;)
     # c = models.Channel(id=d["channel_id"],
-    #                    server_id=message.guild.id,
-    #                    name=message.channel.name,
-    #                    position=message.channel.position,
+    #                    server_id=d["guild_id"],
     #                    is_deleted=False
     #                    )
     #
-    # u = models.User(id=["auhtor"]["id"],
-    #                 username=d["auhtor"]["username"],
+    # u = models.User(id=int(["author"]["id"]),
+    #                 username=d["author"]["username"],
     #                 display_name=d["member"]["nick"],
     #                 is_bot=False
     #                 )
     #
-    # await api.add_server(s)
     # await api.add_channel(c)
     # await api.add_user(u)
 
     try:
-        m = models.Message(message_id=payload.message_id,
-                           author_id=d["author"]["id"],
-                           channel_id=payload.channel_id,
-                           server_id=d["guild_id"],
-                           date_utc=d.get("timestamp"),
-                           date_last_edited_utc=datetime.datetime.utcnow(),
-                           length=len(d["content"]),
-                           is_pinned=d["pinned"],
-                           is_everyone_mention=d["mention_everyone"],
-                           is_deleted=False,
-                           )
+        m = models.Message(
+            message_id=payload.message_id,
+            author_id=d["author"]["id"],
+            channel_id=payload.channel_id,
+            server_id=d["guild_id"],
+            date_utc=d.get("timestamp"),
+            date_last_edited_utc=datetime.datetime.utcnow(),
+            length=len(d["content"]),
+            is_pinned=d["pinned"],
+            is_everyone_mention=d["mention_everyone"],
+            is_deleted=False,
+        )
         await api.add_message(m)
-
-        # TODO create attachment model and send data, need to delete old attachments and add those sent!
-        attachments = [x.url for x in d["attachments"]]
-        # mentions=list(set([int(x["id"]) for x in d["mentions"]])),  # Prevent duplicate spam.
-        # channel_mentions=list(set())  # payload has no channel_mentions, just because :)
+        attachments = [x["url"] for x in d["attachments"]]
+        if len(attachments) > 0:
+            for attachment in attachments:
+                # Should delete old attachments before adding new ones!
+                await api.delete_attachments(message_id=payload.message_id)
+                await api.add_attachment(
+                    models.Attachment(message_id=payload.message_id, url=attachment[0])
+                )
 
     except KeyError:
         # Author.id is not found, because bots sending embedded messages create raw_message_edit event with less data,
@@ -182,31 +169,96 @@ async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
         pass
 
 
+async def parse_message(message: discord.Message):
+    s = models.Server(
+        id=message.guild.id,
+        name=message.guild.name,
+        is_deleted=False,
+        owner_id=message.guild.owner_id,
+    )
+
+    c = models.Channel(
+        id=message.channel.id,
+        server_id=message.guild.id,
+        name=message.channel.name,
+        position=message.channel.position,
+        is_deleted=False,
+    )
+
+    u = models.User(
+        id=message.author.id,
+        username=message.author.name,
+        display_name=message.author.display_name,
+        is_bot=message.author.bot,
+    )
+
+    await api.add_server(s)
+    await api.add_channel(c)
+    await api.add_user(u)
+
+    a = [
+        models.Attachment(message_id=message.id, url=x.url) for x in message.attachments
+    ]
+    for x in a:
+        await api.add_attachment(x)
+
+    for reaction in message.reactions:
+        r = models.Reaction(
+            message_id=message.id,
+            reaction_id=str(reaction.emoji),
+            reaction_hash=hash(str(reaction.emoji)),
+            reacted_id=message.author.id,
+            is_deleted=False,
+        )
+        await api.add_reaction(reaction=r)
+
+    # Add message metadata to database.
+    m = models.Message(
+        message_id=message.id,
+        author_id=message.author.id,
+        channel_id=message.channel.id,
+        server_id=message.guild.id,
+        date_utc=message.created_at,
+        date_last_edited_utc=message.edited_at,
+        length=len(message.clean_content),
+        is_pinned=message.pinned,
+        is_everyone_mention=message.mention_everyone,
+        is_deleted=0,
+    )
+    await api.add_message(m)
+
+
 @client.event
 async def on_reaction_add(reaction, user):
-    reaction = models.Reaction(message_id=reaction.message.id,
-                               reaction_id=str(reaction.emoji),
-                               reaction_hash=hash(str(reaction.emoji)),
-                               reacted_id=user.id,
-                               is_deleted=False
-                               )
+    reaction = models.Reaction(
+        message_id=reaction.message.id,
+        reaction_id=str(reaction.emoji),
+        reaction_hash=hash(str(reaction.emoji)),
+        reacted_id=user.id,
+        is_deleted=False,
+    )
     await api.add_reaction(reaction)
 
 
 @client.event
 async def on_raw_reaction_add(payload: discord.RawReactionActionEvent):
-    reaction = models.Reaction(message_id=payload.message_id,
-                               reaction_id=str(payload.emoji),
-                               reaction_hash=hash(str(payload.emoji)),
-                               reacted_id=payload.user_id,
-                               is_deleted=False
-                               )
+    reaction = models.Reaction(
+        message_id=payload.message_id,
+        reaction_id=str(payload.emoji),
+        reaction_hash=hash(str(payload.emoji)),
+        reacted_id=payload.user_id,
+        is_deleted=False,
+    )
     await api.add_reaction(reaction)
 
 
 @client.event
 async def on_reaction_remove(reaction, user):
-    await api.delete_reaction(message_id=reaction.message.id, reaction_id=reaction.message.author.id, reacted_id=user.id)
+    await api.delete_reaction(
+        message_id=reaction.message.id,
+        reaction_id=reaction.message.author.id,
+        reacted_id=user.id,
+    )
 
 
 @client.event
@@ -238,59 +290,14 @@ async def on_raw_reaction_clear_emoji(payload):
     print("on_raw_reaction_clear_emoji ", payload)
 
 
-# TODO rename, move
-async def addmsg(message: discord.Message):
-    s = models.Server(id=message.guild.id,
-                      name=message.guild.name,
-                      is_deleted=False,
-                      owner_id=message.guild.owner_id
-                      )
-
-    c = models.Channel(id=message.channel.id,
-                       server_id=message.guild.id,
-                       name=message.channel.name,
-                       position=message.channel.position,
-                       is_deleted=False
-                       )
-
-    u = models.User(id=message.author.id,
-                    username=message.author.name,
-                    display_name=message.author.display_name,
-                    is_bot=message.author.bot
-                    )
-
-    await api.add_server(s)
-    await api.add_channel(c)
-    await api.add_user(u)
-
-    a = [models.Attachment(message_id=message.id, url=x.url) for x in message.attachments]
-    for x in a:
-        await api.add_attachment(x)
-
-    # TODO do the same with mentions
-    mentions = list(set(message.raw_mentions))  # Prevent duplicate spam.
-    channel_mentions = list(set(message.raw_channel_mentions))  # Prevent duplicate spam.
-
-    # TODO parse reactions and add to db
-
-    # Add message metadata to database.
-    m = models.Message(message_id=message.id,
-                       author_id=message.author.id,
-                       channel_id=message.channel.id,
-                       server_id=message.guild.id,
-                       date_utc=message.created_at,
-                       date_last_edited_utc=message.edited_at,
-                       length=len(message.clean_content),
-                       is_pinned=message.pinned,
-                       is_everyone_mention=message.mention_everyone,
-                       is_deleted=0
-                       )
-    await api.add_message(m)
+@client.event
+async def on_guild_channel_delete(channel: discord.abc.GuildChannel):
+    await api.delete_channel(channel_id=channel.id)
 
 
-async def background_parse_history(client: discord.Client,
-                                   guild_id: int,
-                                   after: datetime.datetime.date = None) -> tuple:
+async def background_parse_history(
+    client: discord.Client, guild_id: int, after: datetime.datetime.date = None
+) -> tuple:
     """Goes over all channels and indexes messages. Adds missing messages to the database.
 
     :param client: Discord client object.
@@ -308,12 +315,16 @@ async def background_parse_history(client: discord.Client,
             messages += await _parse_channel_history(channel, after)
         except discord.errors.Forbidden:
             # TODO log it as error.
-            print(f"Could not index {guild_id} because of missing permissions... Skipping.")
+            print(
+                f"Could not index {guild_id} because of missing permissions... Skipping."
+            )
             pass
-    return messages, ' '.join(channels)
+    return messages, " ".join(channels)
 
 
-async def _parse_channel_history(channel: discord.TextChannel, after: datetime.datetime.date = None) -> int:
+async def _parse_channel_history(
+    channel: discord.TextChannel, after: datetime.datetime.date = None
+) -> int:
     """Uses discord.py history method to iterate channel's history from the newest to the oldest message.
 
     :param channel: Discord channel object to index.
@@ -322,7 +333,7 @@ async def _parse_channel_history(channel: discord.TextChannel, after: datetime.d
     """
     message_counter = 0
     async for message in channel.history(limit=None, after=after):
-        await addmsg(message)
+        await parse_message(message)
         message_counter += 1
     return message_counter
 
@@ -347,6 +358,7 @@ async def index(ctx):
                 ```
                 """
         await ctx.send(info)
+
 
 if __name__ == "__main__":
     start_bot()

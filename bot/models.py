@@ -6,7 +6,8 @@ and other hardcoded spaghetti.
 """
 
 import datetime
-from typing import List, Optional, Any
+from typing import Any, List, Optional
+
 from pydantic import BaseModel
 
 
@@ -48,6 +49,7 @@ class Message(BaseModel):
     """
     More fields can be found: https://discordpy.readthedocs.io/en/latest/api.html#message
     """
+
     message_id: int
     author_id: int
     channel_id: int
@@ -64,11 +66,3 @@ class Message(BaseModel):
 class Attachment(BaseModel):
     message_id: int
     url: str
-
-class Mention(BaseModel):
-    message_id: int
-    mentioned_id: int
-
-class ChannelMention(BaseModel):
-    message_id: int
-    mentioned_id: int
