@@ -261,3 +261,57 @@ def get_reactions(
 ) -> List[models.Message]:
     # TODO join with messages to be able to query by server/channel/user!
     pass
+
+
+"""
+    DATA VISUALIZATION QUERIES HAPPEN HERE
+"""
+
+
+def get_server_channel_messages(server_id: int, db: Session, after: str = None):
+    """
+    Queries total messages for each channel for given server_id.
+    Returns dictionary of labels and data for chart.js.
+    Can give a date to filter from a date in history.
+
+    How:
+        1. Get all channels for matching server_id from table "channel"
+        2. Count total messages for each channel_id!
+        3. Channel names are labels, data is amount of messages per channel.
+    """
+    # TODO put into dict first, sort by amount of messages and then split!
+
+    labels = []
+    data = []
+
+    query = db.query(models.Channel).filter_by(server_id=server_id).all()
+    for channel in query:
+        labels.append(channel.name)
+        # Count amount of messages.
+        data.append(db.query(models.Message).filter_by(channel_id=channel.id, is_deleted=0).count())
+
+    return {"labels": labels, "data": data}
+
+
+def get_server_total_messages(server_id: int, db: Session, after: str = None):
+    messages = db.query(models.Message).filter_by(server_id=server_id, is_deleted=0).count()
+    deleted = db.query(models.Message).filter_by(server_id=server_id, is_deleted=1).count()
+    return {"server_id": server_id, "total_messages" : messages, "total_deleted": deleted}
+
+
+def get_server_stats(server_id: int, db: Session):
+    # TODO add more fields to server like url, voice channels, whatever else
+    server = db.query(models.Server).filter_by(id=server_id).first()
+    owner = db.query(models.User).filter_by(id=server.owner_id).first()
+    return { "server_id": server_id,
+            "name": server.name,
+            "owner_name": owner.username
+            }
+
+def get_server_message_growth(server_id: int, db: Session, days: int = 7):
+    # TODO call get_Server_total_messages with appropriate after dates!
+    # so for 2 days -> today and today -1
+    # for 7 days -> today t-1 t-2 t-3 t-4 t-5 t-6
+    # if -1, query all and append to other results, so you get growth with past messages!
+    # append -1 to the oldest, and then accumulate over rest! so t-5 = t-6 and t-6 is t-6+-1
+    pass

@@ -244,6 +244,7 @@ async def on_member_update(before, after):
 
 @client.event
 async def on_guild_update(before, after):
+    # TODO new fields! url, amouunt of voice channels,  https://discordpy.readthedocs.io/en/latest/api.html?highlight=guild%20channels#discord.abc.GuildChannel
     s = models.Server(
         id=after.id,
         name=after.name,
@@ -336,7 +337,7 @@ async def background_parse_metadata(guild: discord.Guild):
     )
     await api.add_server(s)
 
-    for channel in guild.channels:
+    for channel in guild.text_channels:
         c = models.Channel(
             id=channel.id,
             server_id=guild.id,

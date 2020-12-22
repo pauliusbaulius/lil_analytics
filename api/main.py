@@ -63,9 +63,8 @@ async def route_logout_and_remove_cookie():
 
 
 @app.get("/test")
-async def get_open_api_endpoint(api_key: APIKey = Depends(get_api_key)):
-    response = "Your key is working!"
-    return response
+async def get_open_api_endpoint():
+    return {"Hello": "World!"}
 
 
 """
@@ -75,7 +74,14 @@ async def get_open_api_endpoint(api_key: APIKey = Depends(get_api_key)):
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "timestamp": datetime.datetime.utcnow()})
+    # TODO all chart generation data is parsed here?
+    context = {
+        "request": request,
+        "timestamp": datetime.datetime.utcnow(),
+        "chartadata": [1, 2],
+        "chartalabels": ["test", "best"],
+    }
+    return templates.TemplateResponse("index.html", context)
 
 
 """
@@ -225,3 +231,24 @@ def get_reactions_by_id(message_id: int, db: Session = Depends(get_db)):
 # @app.get("/reactions/", response_model=List[schemas.Reaction])
 # def get_reactions(server_id: int, channel_id: int, reacted_id:int, db: Session = Depends(get_db)):
 #     return crud.get_reactions(server_id=server_id, channel_id=channel_id, reacted_id=reacted_id, db=db)
+
+"""
+    CHART.JS QUERIES!
+"""
+
+
+@app.get("/charts/server-channel-messages/{server_id}")
+def get_server_channel_messages(server_id: int, after: str = None, db: Session = Depends(get_db)):
+    """
+    Get channels and their total messages for a given server.
+    """
+    return crud.get_server_channel_messages(server_id=server_id, after=after, db=db)
+
+@app.get("/stats/server-total-messages/{server_id}")
+def get_server_total_messages(server_id: int, after: str = None, db: Session = Depends(get_db)):
+    return crud.get_server_total_messages(server_id=server_id, after=after, db=db)
+
+
+@app.get("/stats/server/{server_id}")
+def get_server_stats(server_id: int, db: Session = Depends(get_db)):
+    return crud.get_server_stats(server_id=server_id, db=db)

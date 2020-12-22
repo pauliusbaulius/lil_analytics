@@ -1,0 +1,12 @@
+* {
+    font-family: monospace;
+    font-size: 16px;
+}
+
+body {
+    max-width: 1000px;
+}
+
+canvas {
+    max-width: 400px;
+}

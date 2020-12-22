@@ -1,14 +1,18 @@
 # lil_analytics
+
+**version alpha - stuff will break**
+
 Message metadata analytics bot. Collects messages on write/edit/delete and displays nice graphs. 
+
 Answers deep questions about your friends/users:
 
 - Who nolifes the most?
 - Who goes to sleep at 3am?
 - Which channels are worth keeping?
 
-Will ~~Also~~ display~~s~~ nice graphs that make you feel informed and productive.
 
-\<insert images here\>
+
+![dashboard](dashboard.png)
 
 ## commands
 ```
@@ -45,10 +49,11 @@ Will ~~Also~~ display~~s~~ nice graphs that make you feel informed and productiv
 
 
 ## todo features
-- [ ] api and bot should have separate pipenvs
+- [x] api and bot should have separate pipenvs
 - [ ] non-root docker containers
 - [ ] logging
 - [ ] promtail->loki exporter example for your docker spyware stack
+- [ ] dashboard slector for all servers!
 
 ## install && deploy
 1. Create and fill out env file: `$ mv .env.example .env`!
