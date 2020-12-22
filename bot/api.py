@@ -1,14 +1,11 @@
-"""
-Communication with the API. add_ should be used to update information. MongoDB can "upsert".
-"""
 import os
 
 import requests
 
 from . import models
 
-# FIXME this is a shit quality solution
-API_KEY=f"?api_key={os.environ['FASTAPI_KEY']}"
+# FIXME this is a shit quality solution. Should send api key with the request, not in url parameter!
+API_KEY = f"?api_key={os.environ['FASTAPI_KEY']}"
 
 
 async def add_server(server: models.Server):
@@ -16,6 +13,7 @@ async def add_server(server: models.Server):
         _ = requests.post(url="http://api:5000/server/" + API_KEY, data=server.json())
     except AttributeError:
         print(server)
+
 
 async def add_channel(channel: models.Channel):
     try:
@@ -42,7 +40,7 @@ async def delete_message(message_id: int):
     """
     Called by on_message_delete, on_bulk_message_delete, on_raw_bulk_message_delete, on_raw_message_delete
     """
-    _ = requests.delete(url=f"http://api:5000/message/?message_id={message_id}" + "&" + API_KEY)
+    _ = requests.delete(url=f"http://api:5000/message/?message_id={message_id}" + "&" + API_KEY[1:])
 
 
 async def add_attachment(a: models.Attachment):
@@ -53,7 +51,7 @@ async def add_attachment(a: models.Attachment):
 
 
 async def delete_attachments(message_id: int):
-    _ = requests.delete(url=f"http://api:5000/attachment/?message_id={message_id}" + "&" + API_KEY)
+    _ = requests.delete(url=f"http://api:5000/attachment/?message_id={message_id}" + "&" + API_KEY[1:])
 
 
 async def add_reaction(reaction: models.Reaction):
@@ -79,11 +77,8 @@ async def delete_reaction(message_id: int, reaction_id: str, reacted_id: int):
 
 
 async def delete_reactions(message_id: int):
-    """
-    Option to clear all reactions!
-    """
-    print("api.delete_reactions", message_id)
+    _ = requests.delete(url=f"http://api:5000/reaction/?message_id={message_id}" + "&" + API_KEY[1:])
 
 
 async def delete_channel(channel_id: int):
-    _ = requests.delete(url=f"http://api:5000/channel/?channel_id={channel_id}" + "&" + API_KEY)
+    _ = requests.delete(url=f"http://api:5000/channel/?channel_id={channel_id}" + "&" + API_KEY[1:])

@@ -27,9 +27,7 @@ def delete_server(server_id: int, db: Session) -> Optional[models.Server]:
     try:
         db_server.is_delete = True
         # FIXME need to soft delete all messages of the server, but there must be a more efficient way than iteration!
-        db_server_messages = (
-            db.query(models.Message).filter(models.Message.server_id == server_id).all()
-        )
+        db_server_messages = db.query(models.Message).filter(models.Message.server_id == server_id).all()
         for message in db_server_messages:
             message.is_deleted = True
         db.commit()
@@ -49,9 +47,7 @@ def get_servers(db: Session):
 
 def get_server_channels(server_id, db):
     try:
-        return (
-            db.query(models.Channel).filter(models.Channel.server_id == server_id).all()
-        )
+        return db.query(models.Channel).filter(models.Channel.server_id == server_id).all()
     except ValueError:
         # TODO return error json?
         return None
@@ -71,17 +67,11 @@ def create_channel(db: Session, channel: schemas.ChannelCreate):
 
 
 def delete_channel(channel_id: int, db: Session):
-    db_channel = (
-        db.query(models.Channel).filter(models.Channel.id == channel_id).first()
-    )
+    db_channel = db.query(models.Channel).filter(models.Channel.id == channel_id).first()
     try:
         db_channel.is_delete = True
         # FIXME need to soft delete all messages of the channel, but there must be a more efficient way than iteration!
-        db_server_messages = (
-            db.query(models.Message)
-                .filter(models.Message.channel_id == channel_id)
-                .all()
-        )
+        db_server_messages = db.query(models.Message).filter(models.Message.channel_id == channel_id).all()
         for message in db_server_messages:
             message.is_deleted = True
         db.commit()
@@ -126,9 +116,7 @@ def get_users(db: Session):
 
 
 def create_message(db: Session, message: schemas.MessageCreate):
-    db_message = models.Message(
-        **message.dict(), db_upserted=datetime.datetime.utcnow()
-    )
+    db_message = models.Message(**message.dict(), db_upserted=datetime.datetime.utcnow())
     db.merge(db_message)
     db.commit()
     # db.refresh(db_message)
@@ -140,9 +128,7 @@ def delete_message_by_id(db, message_id) -> Optional[models.Message]:
     Deletes message given its id. If message does not exist, None is returned.
     Otherwise message is returned.
     """
-    db_message = (
-        db.query(models.Message).filter(models.Message.message_id == message_id).first()
-    )
+    db_message = db.query(models.Message).filter(models.Message.message_id == message_id).first()
     try:
         db_message.is_deleted = True
         db.commit()
@@ -153,17 +139,15 @@ def delete_message_by_id(db, message_id) -> Optional[models.Message]:
 
 
 def get_message_by_id(db: Session, message_id: int) -> Optional[models.Message]:
-    return (
-        db.query(models.Message).filter(models.Message.message_id == message_id).first()
-    )
+    return db.query(models.Message).filter(models.Message.message_id == message_id).first()
 
 
 def get_messages(
-        db: Session,
-        channel_id: int = None,
-        server_id: int = None,
-        user_id: int = None,
-        limit: int = 100,
+    db: Session,
+    channel_id: int = None,
+    server_id: int = None,
+    user_id: int = None,
+    limit: int = 100,
 ) -> List[models.Message]:
 
     query = db.query(models.Message)
@@ -182,9 +166,7 @@ def get_messages(
 """
 
 
-def create_attachment(
-        db: Session, attachment: schemas.AttachmentCreate
-) -> models.Attachment:
+def create_attachment(db: Session, attachment: schemas.AttachmentCreate) -> models.Attachment:
     db_attachment = models.Attachment(**attachment.dict())
     db.add(db_attachment)
     db.commit()
@@ -193,11 +175,7 @@ def create_attachment(
 
 
 def delete_attachments_by_id(db, message_id):
-    db_attachments = (
-        db.query(models.Attachment)
-            .filter(models.Attachment.message_id == message_id)
-            .all()
-    )
+    db_attachments = db.query(models.Attachment).filter(models.Attachment.message_id == message_id).all()
     for db_attachment in db_attachments:
         db_attachment.is_deleted = True
     db.commit()
@@ -209,22 +187,17 @@ def get_attachment_by_url(db: Session, url: str) -> Optional[models.Attachment]:
 
 
 def get_attachments(
-
-            db: Session,
-            channel_id: int = None,
-            server_id: int = None,
-            limit: int = 100,
-    ) -> List[models.Attachment]:
+    db: Session,
+    channel_id: int = None,
+    server_id: int = None,
+    limit: int = 100,
+) -> List[models.Attachment]:
     # TODO join with messages? to be able to filter by channel/Server/user
     pass
 
 
 def get_attachments_by_message_id(db: Session, message_id: int):
-    return (
-        db.query(models.Attachment)
-            .filter(models.Attachment.message_id == message_id)
-            .all()
-    )
+    return db.query(models.Attachment).filter(models.Attachment.message_id == message_id).all()
 
 
 """
@@ -239,21 +212,15 @@ def create_reaction(db: Session, reaction: schemas.ReactionCreate):
     return db_reaction
 
 
-
-def get_reaction_by_ids(
-        db: Session,
-        message_id: int,
-        reacted_id: int,
-        reaction_id: str
-):
+def get_reaction_by_ids(db: Session, message_id: int, reacted_id: int, reaction_id: str):
     return (
         db.query(models.Reaction)
-            .filter(
+        .filter(
             models.Reaction.message_id == message_id,
             models.Reaction.reacted_id == reacted_id,
             models.Reaction.reaction_id == reaction_id,
         )
-            .first()
+        .first()
     )
 
 
@@ -265,16 +232,15 @@ def delete_reactions(message_id: int, db: Session) -> List[models.Reaction]:
     return db_reactions
 
 
-
 def delete_reaction_by_ids(db, message_id, reaction_id, reacted_id):
     db_reaction = (
         db.query(models.Reaction)
-            .filter(
+        .filter(
             models.Reaction.message_id == message_id,
             models.Reaction.reacted_id == reacted_id,
             models.Reaction.reaction_id == reaction_id,
         )
-            .first()
+        .first()
     )
     db_reaction.is_deleted = True
     db.commit()
@@ -282,22 +248,16 @@ def delete_reaction_by_ids(db, message_id, reaction_id, reacted_id):
 
 
 def get_reactions_by_message_id(db: Session, message_id: int):
-    return (
-        db.query(models.Reaction).filter(models.Reaction.message_id == message_id).all()
-    )
+    return db.query(models.Reaction).filter(models.Reaction.message_id == message_id).all()
 
 
 def get_reactions(
-        db: Session,
-        channel_id: int = None,
-        server_id: int = None,
-        reacted_id: int = None,
-        reaction_id: str = None,
-        limit: int = 100,
+    db: Session,
+    channel_id: int = None,
+    server_id: int = None,
+    reacted_id: int = None,
+    reaction_id: str = None,
+    limit: int = 100,
 ) -> List[models.Message]:
     # TODO join with messages to be able to query by server/channel/user!
-   pass
-
-
-
-
+    pass

@@ -8,7 +8,6 @@ services:
     restart: unless-stopped
     environment:
       - FASTAPI_KEY=${FASTAPI_KEY}
-      - DOMAIN=${DOMAIN}
     volumes:
       # See api/database.py, sqlite is mounted in /db/lil_analytics.db
       - ./docker/sqlite/:/db/
@@ -25,6 +24,7 @@ services:
     container_name: "lil_analytics_bot"
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
+      - BOT_OWNER_ID=${BOT_OWNDER_ID}
       - COMMAND_PREFIX=${COMMAND_PREFIX}
       - STATUS_MESSAGE=${STATUS_MESSAGE}
       - INVITE_LINK=${INVITE_LINK}
@@ -51,20 +51,6 @@ services:
 #    networks:
 #      - web
 #      - internal
-  caddy:
-    image: caddy:2.1.1-alpine
-    restart: unless-stopped
-    environment:
-     - DOMAIN=${DOMAIN}
-     - EMAIL=${EMAIL}
-    ports:
-      - "${NGINX_PORT}:80"
-      - "443:443"
-    volumes:
-      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
-    networks:
-      - internal
-      - web
 
 networks:
   internal:

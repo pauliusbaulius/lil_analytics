@@ -31,15 +31,9 @@ class ToolsGeneral(commands.Cog):
             description=f'You can find out more [here]({os.environ["GITHUB_LINK"]}).',
             color=0x0000FF,
         )
-        embed.add_field(
-            name="b", value="Makes bot say your text in next generation caps."
-        )
-        embed.add_field(
-            name="choose/c", value="Random pick from your inputs separated by ';'."
-        )
-        embed.add_field(
-            name="8ball", value="The classic 8ball game, is there more to say?"
-        )
+        embed.add_field(name="b", value="Makes bot say your text in next generation caps.")
+        embed.add_field(name="choose/c", value="Random pick from your inputs separated by ';'.")
+        embed.add_field(name="8ball", value="The classic 8ball game, is there more to say?")
         await ctx.send(embed=embed)
 
         # Administration commands
@@ -50,9 +44,7 @@ class ToolsGeneral(commands.Cog):
         )
         embed.add_field(name="kick", value="Kicks mentioned user. Can pass a reason.")
         embed.add_field(name="ban", value="Bans mentioned user. Can pass a reason.")
-        embed.add_field(
-            name="clear", value="Takes number or 'all' as argument. Deletes messages."
-        )
+        embed.add_field(name="clear", value="Takes number or 'all' as argument. Deletes messages.")
         embed.add_field(
             name="gdpr",
             value="Deletes all messages in the channel made by the mentioned user.",
@@ -70,9 +62,7 @@ class ToolsGeneral(commands.Cog):
         embed = discord.Embed(title="lil analytics", description=desc, color=0xFFFF00)
         embed.add_field(name="Author:", value="pauliusbaulius", inline=False)
         # Shows the number of servers the bot is member of.
-        embed.add_field(
-            name="Server count:", value=f"{len(self.client.guilds)}", inline=False
-        )
+        embed.add_field(name="Server count:", value=f"{len(self.client.guilds)}", inline=False)
         embed.add_field(
             name="Invite me:",
             value=f'[>click me<]({os.environ["INVITE_LINK"]})',

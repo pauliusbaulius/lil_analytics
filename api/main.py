@@ -1,31 +1,25 @@
+import datetime
 import os
 from typing import List, Optional
 
-import datetime
-
+from fastapi import Depends, FastAPI, HTTPException, Security
+from fastapi.security.api_key import (APIKey, APIKeyCookie, APIKeyHeader,
+                                      APIKeyQuery)
+from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from starlette.requests import Request
-from starlette.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
+from starlette.status import HTTP_403_FORBIDDEN
 
 from api import crud, models, schemas
 from api.database import SessionLocal, engine
-
-
-from fastapi import Security, Depends, FastAPI, HTTPException
-from fastapi.security.api_key import APIKeyQuery, APIKeyCookie, APIKeyHeader, APIKey
-
-from starlette.status import HTTP_403_FORBIDDEN
-from starlette.responses import RedirectResponse
-
 
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="api/static"), name="static")
 templates = Jinja2Templates(directory="api/templates")
-
 
 
 def get_db():
@@ -58,9 +52,7 @@ async def get_api_key(
     elif api_key_header == API_KEY:
         return api_key_header
     else:
-        raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN, detail="Unauthorized access! Access key is required!"
-        )
+        raise HTTPException(status_code=HTTP_403_FORBIDDEN, detail="Unauthorized access! Access key is required!")
 
 
 @app.get("/logout")
@@ -74,6 +66,7 @@ async def route_logout_and_remove_cookie():
 async def get_open_api_endpoint(api_key: APIKey = Depends(get_api_key)):
     response = "Your key is working!"
     return response
+
 
 """
     INDEX-DASHBOARD
@@ -111,7 +104,9 @@ def get_server_channels(server_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/channel/", response_model=schemas.Channel)
-def create_channel(channel: schemas.ChannelCreate, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)):
+def create_channel(
+    channel: schemas.ChannelCreate, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)
+):
     return crud.create_channel(db=db, channel=channel)
 
 
@@ -119,16 +114,21 @@ def create_channel(channel: schemas.ChannelCreate, db: Session = Depends(get_db)
 def delete_channel(channel_id: int, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)):
     return crud.delete_channel(channel_id=channel_id, db=db)
 
+
 """
     USER
 """
+
+
 @app.post("/user/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)):
     return crud.create_user(db=db, user=user)
 
+
 @app.get("/user/{user_id}", response_model=schemas.User)
 def get_user(user_id: int, db: Session = Depends(get_db)):
     return crud.get_user_by_id(user_id=user_id, db=db)
+
 
 """
     MESSAGE
@@ -136,7 +136,9 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/message/", response_model=schemas.Message)
-def create_message(message: schemas.MessageCreate, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)):
+def create_message(
+    message: schemas.MessageCreate, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)
+):
     return crud.create_message(db=db, message=message)
 
 
@@ -149,14 +151,9 @@ def delete_message(message_id: int, db: Session = Depends(get_db), api_key: APIK
 
 @app.get("/messages/", response_model=List[schemas.Message])
 def get_messages(
-                 server_id: int = None,
-                 channel_id: int = None,
-                 user_id: int = None,
-                 db: Session = Depends(get_db), limit: int = 100):
-    return crud.get_messages(server_id=server_id,
-                             channel_id=channel_id,
-                             user_id=user_id,
-                             db=db, limit=limit)
+    server_id: int = None, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db), limit: int = 100
+):
+    return crud.get_messages(server_id=server_id, channel_id=channel_id, user_id=user_id, db=db, limit=limit)
 
 
 @app.get("/message/{message_id}", response_model=schemas.Message)
@@ -175,9 +172,7 @@ def create_attachment(
 ):
     db_message = crud.get_attachment_by_url(db, url=attachment.url)
     if db_message:
-        raise HTTPException(
-            status_code=400, detail=f"Attachment [{attachment.url}] already exists!"
-        )
+        raise HTTPException(status_code=400, detail=f"Attachment [{attachment.url}] already exists!")
     return crud.create_attachment(db=db, attachment=attachment)
 
 
@@ -201,7 +196,9 @@ def get_attachments_by_id(message_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/reaction/", response_model=schemas.Reaction)
-def create_reaction(reaction: schemas.ReactionCreate, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)):
+def create_reaction(
+    reaction: schemas.ReactionCreate, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)
+):
     return crud.create_reaction(db=db, reaction=reaction)
 
 
@@ -213,6 +210,12 @@ def create_reaction(reaction: schemas.ReactionCreate, db: Session = Depends(get_
 #                     db: Session = Depends(get_db)):
 #     print(message_id, reacted_id, reaction_id)
 #     return crud.delete_reaction_by_ids(db, message_id=message_id, reaction_id=reaction_id, reacted_id=reacted_id)
+
+
+@app.delete("/reaction/{reaction_id}", response_model=schemas.Reaction)
+def delete_reactions(message_id: int, db: Session = Depends(get_db), api_key: APIKey = Depends(get_api_key)):
+    return crud.delete_reactions(message_id=message_id, db=db)
+
 
 @app.get("/reactions/{message_id}", response_model=List[schemas.Reaction])
 def get_reactions_by_id(message_id: int, db: Session = Depends(get_db)):

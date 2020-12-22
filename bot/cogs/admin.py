@@ -41,19 +41,13 @@ class Admin(commands.Cog):
         """Deletes given amount of messages from the channel. Keyword 'all' deletes all messages."""
         try:
             if int(amount) > 0:
-                await ctx.channel.purge(
-                    limit=int(amount) + 1
-                )  # +1 to delete the .clear message too.
-                await ctx.send(
-                    f"Permanently removed {amount} message(s) in this channel."
-                )
+                await ctx.channel.purge(limit=int(amount) + 1)  # +1 to delete the .clear message too.
+                await ctx.send(f"Permanently removed {amount} message(s) in this channel.")
 
         except ValueError:
             if amount == "all":
                 await ctx.channel.purge(limit=None)
-                await ctx.channel.send(
-                    f"Press F for this channel. All messages have been nuked."
-                )
+                await ctx.channel.send(f"Press F for this channel. All messages have been nuked.")
 
     @commands.has_permissions(administrator=True)
     @commands.command()
@@ -67,8 +61,7 @@ class Admin(commands.Cog):
                 await message.delete(delay=None)
         aft = time.time()
         await ctx.send(
-            f"Deleted {counter} message(s) by {member} in "
-            f"{time.strftime('%H:%M:%S', time.gmtime(int(aft - bef)))}."
+            f"Deleted {counter} message(s) by {member} in " f"{time.strftime('%H:%M:%S', time.gmtime(int(aft - bef)))}."
         )
 
     # @commands.has_permissions(administrator=True)

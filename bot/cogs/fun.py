@@ -13,9 +13,7 @@ class Fun(commands.Cog):
     async def _8ball(self, ctx, *, question):
         """The absolute classic 8ball. You cannot have a bot without this function."""
         embed = discord.Embed(title="Q:", description=question)
-        embed.add_field(
-            name="<:think4:661236485667946506>", value=random.choice(_8ball_responses)
-        )
+        embed.add_field(name="<:think4:661236485667946506>", value=random.choice(_8ball_responses))
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["c"])
@@ -69,7 +67,7 @@ b_dictionary = {
     "X": ":regional_indicator_x:",
     "Y": ":regional_indicator_y:",
     "Z": ":regional_indicator_z:",
-    " ": "<:space:676196986164084736>",  # Custom emoji because discord's blue square is different blue.
+    " ": "<:space:790954169703596063>",  # Custom emoji because discord's blue square is different blue.
     "0": ":zero:",
     "1": ":one:",
     "2": ":two:",

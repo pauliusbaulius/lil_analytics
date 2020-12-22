@@ -62,8 +62,6 @@ class Message(Base):
         """
 
 
-
-
 class Attachment(Base):
     __tablename__ = "attachment"
     message_id = Column(Integer, ForeignKey("message.message_id"), primary_key=True)

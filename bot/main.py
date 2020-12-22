@@ -1,5 +1,6 @@
 import datetime
 import os
+import time
 from timeit import default_timer
 from typing import List
 
@@ -11,17 +12,15 @@ from bot.decorators import timer
 from bot.root import ROOT_DIR
 from bot.utils import is_owner
 
-client = commands.Bot(
-    command_prefix=commands.when_mentioned_or(os.environ["COMMAND_PREFIX"])
-)
+# TODO README about this! without this intent you cannot get full members list easily.
+intents = discord.Intents.default()
+intents.presences = True
+client = commands.Bot(command_prefix=commands.when_mentioned_or(os.environ["COMMAND_PREFIX"]), intents=intents)
 client.remove_command("help")
 
 
 def start_bot():
     print("lil analytics: Calling start_bot() in main.py!")
-
-    # print("lil analytics: Adding src/ to syspath!")
-    # sys.path.insert(0, definitions.root_dir)
 
     print("lil analytics: Loading cogs.")
     # Load all cogs by default.
@@ -38,16 +37,17 @@ def start_bot():
 @client.event
 async def on_ready():
     # This runs if everything goes right. Starts background processes.
-    await client.change_presence(
-        activity=discord.Game(name=os.environ["STATUS_MESSAGE"])
-    )  # Add status message.
+    await client.change_presence(activity=discord.Game(name=os.environ["STATUS_MESSAGE"]))  # Add status message.
     print("lil analytics: Bot is now running!")
 
-    print("lil analytics: Background indexing of messages in last 24h started!")
+    print("lil analytics: Background indexing of messages started!")
     time_before = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
-    # TODO enable when old message parsing is decent
-    # for guild_id in [g.id for g in client.guilds]:
-    #    await client.loop.create_task(background_parse_history(client=client, guild_id=guild_id, after=time_before))
+
+    for guild in client.guilds:
+        await client.loop.create_task(background_parse_metadata(guild=guild))
+
+    for guild_id in [g.id for g in client.guilds]:
+        await client.loop.create_task(background_parse_history(client=client, guild_id=guild_id, after=time_before))
 
 
 @timer
@@ -103,8 +103,10 @@ async def on_raw_message_delete(payload: discord.RawMessageDeleteEvent):
 
 @client.event
 async def on_message(message):
-    """This is where you can add functions that react to user messages that
-    are not direct commands."""
+    """
+    This is where you can add functions that react to user messages that
+    are not direct commands.
+    """
 
     # Prevent recursive calls.
     if message.author == client.user:
@@ -123,22 +125,12 @@ async def on_message_edit(_, after):
 
 
 @client.event
-async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
+async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent) -> None:
+    """
+    Creates a message object from payload data. Sends message to the api to be updated/inserted into the database.
+    Requests to delete all attachment data, to not make a request and compare data. Sends new attachment data instead.
+    """
     d = payload.data
-    # TODO-FEATURE would work if other params would be optional ;)
-    # c = models.Channel(id=d["channel_id"],
-    #                    server_id=d["guild_id"],
-    #                    is_deleted=False
-    #                    )
-    #
-    # u = models.User(id=int(["author"]["id"]),
-    #                 username=d["author"]["username"],
-    #                 display_name=d["member"]["nick"],
-    #                 is_bot=False
-    #                 )
-    #
-    # await api.add_channel(c)
-    # await api.add_user(u)
 
     try:
         m = models.Message(
@@ -159,9 +151,7 @@ async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
             for attachment in attachments:
                 # Should delete old attachments before adding new ones!
                 await api.delete_attachments(message_id=payload.message_id)
-                await api.add_attachment(
-                    models.Attachment(message_id=payload.message_id, url=attachment[0])
-                )
+                await api.add_attachment(models.Attachment(message_id=payload.message_id, url=attachment[0]))
 
     except KeyError:
         # Author.id is not found, because bots sending embedded messages create raw_message_edit event with less data,
@@ -170,35 +160,36 @@ async def on_raw_message_edit(payload: discord.RawMessageUpdateEvent):
 
 
 async def parse_message(message: discord.Message):
-    s = models.Server(
-        id=message.guild.id,
-        name=message.guild.name,
-        is_deleted=False,
-        owner_id=message.guild.owner_id,
-    )
+    """
+    Given a message object, extracts data to build model of Message.
+    """
+    # s = models.Server(
+    #     id=message.guild.id,
+    #     name=message.guild.name,
+    #     is_deleted=False,
+    #     owner_id=message.guild.owner_id,
+    # )
+    #
+    # c = models.Channel(
+    #     id=message.channel.id,
+    #     server_id=message.guild.id,
+    #     name=message.channel.name,
+    #     position=message.channel.position,
+    #     is_deleted=False,
+    # )
+    #
+    # u = models.User(
+    #     id=message.author.id,
+    #     username=message.author.name,
+    #     display_name=message.author.display_name,
+    #     is_bot=message.author.bot,
+    # )
+    #
+    # await api.add_server(s)
+    # await api.add_channel(c)
+    # await api.add_user(u)
 
-    c = models.Channel(
-        id=message.channel.id,
-        server_id=message.guild.id,
-        name=message.channel.name,
-        position=message.channel.position,
-        is_deleted=False,
-    )
-
-    u = models.User(
-        id=message.author.id,
-        username=message.author.name,
-        display_name=message.author.display_name,
-        is_bot=message.author.bot,
-    )
-
-    await api.add_server(s)
-    await api.add_channel(c)
-    await api.add_user(u)
-
-    a = [
-        models.Attachment(message_id=message.id, url=x.url) for x in message.attachments
-    ]
+    a = [models.Attachment(message_id=message.id, url=x.url) for x in message.attachments]
     for x in a:
         await api.add_attachment(x)
 
@@ -226,6 +217,40 @@ async def parse_message(message: discord.Message):
         is_deleted=0,
     )
     await api.add_message(m)
+
+
+@client.event
+async def on_guild_channel_update(before, after):
+    c = models.Channel(
+        id=after.id,
+        server_id=after.guild.id,
+        name=after.name,
+        position=after.position,
+        is_deleted=False,
+    )
+    await api.add_channel(c)
+
+
+@client.event
+async def on_member_update(before, after):
+    u = models.User(
+        id=after.id,
+        username=after.name,
+        display_name=after.display_name,
+        is_bot=after.bot,
+    )
+    await api.add_user(u)
+
+
+@client.event
+async def on_guild_update(before, after):
+    s = models.Server(
+        id=after.id,
+        name=after.name,
+        is_deleted=False,
+        owner_id=after.owner_id,
+    )
+    await api.add_server(s)
 
 
 @client.event
@@ -292,7 +317,43 @@ async def on_raw_reaction_clear_emoji(payload):
 
 @client.event
 async def on_guild_channel_delete(channel: discord.abc.GuildChannel):
+    """
+    Sends channel delete request to the api.
+    """
     await api.delete_channel(channel_id=channel.id)
+
+
+async def background_parse_metadata(guild: discord.Guild):
+    """
+    On boot, indexes all guilds, channels and users. Updates/inserts new data into the database via api calls.
+    This is needed to get new changes on start, when bot is live, on_*_update functions do this job instead.
+    """
+    s = models.Server(
+        id=guild.id,
+        name=guild.name,
+        is_deleted=False,
+        owner_id=guild.owner_id,
+    )
+    await api.add_server(s)
+
+    for channel in guild.channels:
+        c = models.Channel(
+            id=channel.id,
+            server_id=guild.id,
+            name=channel.name,
+            position=channel.position,
+            is_deleted=False,
+        )
+        await api.add_channel(c)
+
+    async for user in guild.fetch_members(limit=None):
+        u = models.User(
+            id=user.id,
+            username=user.name,
+            display_name=user.display_name,
+            is_bot=user.bot,
+        )
+        await api.add_user(u)
 
 
 async def background_parse_history(
@@ -315,16 +376,12 @@ async def background_parse_history(
             messages += await _parse_channel_history(channel, after)
         except discord.errors.Forbidden:
             # TODO log it as error.
-            print(
-                f"Could not index {guild_id} because of missing permissions... Skipping."
-            )
+            print(f"Could not index {guild_id} because of missing permissions... Skipping.")
             pass
     return messages, " ".join(channels)
 
 
-async def _parse_channel_history(
-    channel: discord.TextChannel, after: datetime.datetime.date = None
-) -> int:
+async def _parse_channel_history(channel: discord.TextChannel, after: datetime.datetime.date = None) -> int:
     """Uses discord.py history method to iterate channel's history from the newest to the oldest message.
 
     :param channel: Discord channel object to index.
@@ -347,17 +404,21 @@ async def index(ctx):
     """
     if is_owner(ctx.message.author.id):
         start = default_timer()
+        await ctx.send("`lil_analytics@matrix: indexing started!`")
         indexed_count, channels = await background_parse_history(client, ctx.guild.id)
         end = default_timer()
         info = f"""
                 ```
-                indexing done...
-                time taken: {str(datetime.timedelta(seconds=end - start))}
-                messages processed: {indexed_count}
-                channels indexed: {channels}
+                lil_analytics@matrix:
+                    indexing done...
+                    time taken: {str(datetime.timedelta(seconds=end - start))}
+                    messages processed: {indexed_count}
+                    channels indexed: {channels}
                 ```
                 """
         await ctx.send(info)
+    else:
+        await ctx.send(":(", ctx.message.author.id)
 
 
 if __name__ == "__main__":
