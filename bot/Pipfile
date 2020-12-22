@@ -4,13 +4,10 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-discord = "*"
-python-dateutil = ">=2.8.1"
-pydantic = "*"
-fastapi = "*"
-uvicorn = "*"
-requests = "*"
-sqlalchemy = "*"
+discord = "1.5.1"
+python-dateutil = "2.8.1"
+requests = "2.25.1"
+pydantic = "1.7.3"
 
 [dev-packages]
 

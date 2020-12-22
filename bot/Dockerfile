@@ -6,7 +6,7 @@ EXPOSE 80
 
 RUN pip install pipenv
 
-COPY Pipfile Pipfile.lock /
+COPY bot/Pipfile bot/Pipfile.lock /
 
 # https://stackoverflow.com/questions/46503947/how-to-get-pipenv-running-in-docker
 RUN pipenv install --system --deploy --ignore-pipfile
