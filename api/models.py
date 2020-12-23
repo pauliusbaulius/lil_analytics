@@ -43,7 +43,7 @@ class Message(Base):
     length = Column(Integer)
     is_pinned = Column(Boolean)
     is_everyone_mention = Column(Boolean)
-    is_deleted = Column(Boolean, default=False)
+    is_deleted = Column(Boolean, default=False, index=True)
 
     attachments = relationship("Attachment")
     author = relationship("User")
@@ -52,14 +52,6 @@ class Message(Base):
     reactions = relationship("Reaction")
 
     db_upserted = Column(DateTime)
-
-    def _asdict(self):
-        """
-        Serialization logic for converting entities using flask's jsonify
-
-        :return: An ordered dictionary
-        :rtype: :class:`collections.OrderedDict`
-        """
 
 
 class Attachment(Base):
@@ -74,7 +66,7 @@ class Attachment(Base):
 
 class Reaction(Base):
     __tablename__ = "reaction"
-    message_id = Column(Integer, ForeignKey("message.message_id"), primary_key=True)
+    message_id = Column(Integer, ForeignKey("message.message_id"), primary_key=True, index=True)
     reacted_id = Column(Integer, primary_key=True)
     reaction_id = Column(String, primary_key=True)
     reaction_hash = Column(Integer)

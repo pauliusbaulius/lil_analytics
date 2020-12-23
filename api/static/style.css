@@ -1,12 +1,45 @@
 * {
     font-family: monospace;
-    font-size: 16px;
 }
 
 body {
-    max-width: 1000px;
+    max-width: 1200px;
+    font-size: 16px;
+    margin: 0 auto;
+    padding: 50px;
 }
 
 canvas {
-    max-width: 400px;
+    max-width: 100%;
+}
+/*
+.canvas-small {
+    width: 300px;
+    height: 300px;
+}
+
+.canvas-medium {
+    width: 600px;
+    height: 600px;
+}
+
+.canvas-long {
+    width: 600px;
+    height: 300px;
+}
+
+.canvas-tall {
+    width: 300px;
+    height: 600px;
+}
+*/
+
+.hint {
+    font-size: smaller;
+    color: darkgray;
+}
+
+.grid-canvas {
+    display: grid;
+   /* grid-template-columns: repeat( auto-fill, minmax(0, 1fr) ); */
 }

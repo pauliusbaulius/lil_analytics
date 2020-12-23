@@ -43,14 +43,13 @@ async def on_ready():
     print("lil analytics: Background indexing of messages started!")
     time_before = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
 
-    for guild in client.guilds:
-        await client.loop.create_task(background_parse_metadata(guild=guild))
+    # for guild in client.guilds:
+    #    await client.loop.create_task(background_parse_metadata(guild=guild))
 
-    for guild_id in [g.id for g in client.guilds]:
-        await client.loop.create_task(background_parse_history(client=client, guild_id=guild_id, after=time_before))
+    # for guild_id in [g.id for g in client.guilds]:
+    #    await client.loop.create_task(background_parse_history(client=client, guild_id=guild_id, after=time_before))
 
 
-@timer
 @client.command()
 async def load(ctx, extension):
     """Loads cog from cogs folder."""
@@ -62,7 +61,6 @@ async def load(ctx, extension):
             await ctx.send(f"Extension [{extension}] does not exist.")
 
 
-@timer
 @client.command()
 async def unload(ctx, extension):
     """Unloads cog from cogs folder."""
@@ -404,22 +402,14 @@ async def index(ctx):
     Adds messages and their metadata to the database in 500 message bulk insertions.
     """
     if is_owner(ctx.message.author.id):
-        start = default_timer()
         await ctx.send("`lil_analytics@matrix: indexing started!`")
-        indexed_count, channels = await background_parse_history(client, ctx.guild.id)
+        start = default_timer()
+        indexed_count, channels = await background_parse_history(client=client, guild_id=ctx.guild.id)
         end = default_timer()
-        info = f"""
-                ```
-                lil_analytics@matrix:
-                    indexing done...
-                    time taken: {str(datetime.timedelta(seconds=end - start))}
-                    messages processed: {indexed_count}
-                    channels indexed: {channels}
-                ```
-                """
+        info = f"""```\nlil_analytics@matrix:\n indexing done...\n time taken: {str(datetime.timedelta(seconds=end - start))}\n messages processed: {indexed_count}\n channels indexed: {channels}```"""
         await ctx.send(info)
     else:
-        await ctx.send(":(", ctx.message.author.id)
+        await ctx.send(ctx.message.author.id)
 
 
 if __name__ == "__main__":

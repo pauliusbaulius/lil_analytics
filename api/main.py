@@ -1,12 +1,12 @@
 import datetime
 import os
-from typing import List, Optional
+from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException, Security
-from fastapi.security.api_key import (APIKey, APIKeyCookie, APIKeyHeader,
-                                      APIKeyQuery)
+from fastapi.security.api_key import APIKey, APIKeyHeader, APIKeyQuery
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
@@ -14,6 +14,7 @@ from starlette.status import HTTP_403_FORBIDDEN
 
 from api import crud, models, schemas
 from api.database import SessionLocal, engine
+from api.utils import check_existence, get_conditional_where
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -242,13 +243,117 @@ def get_server_channel_messages(server_id: int, after: str = None, db: Session =
     """
     Get channels and their total messages for a given server.
     """
-    return crud.get_server_channel_messages(server_id=server_id, after=after, db=db)
+    # TODO sort by channel position or message count, pass sort ENUM!
+    if check_existence(db=db, server_id=server_id):
+        return crud.get_server_channel_messages(server_id=server_id, after=after, db=db)
+
 
 @app.get("/stats/server-total-messages/{server_id}")
 def get_server_total_messages(server_id: int, after: str = None, db: Session = Depends(get_db)):
-    return crud.get_server_total_messages(server_id=server_id, after=after, db=db)
+    if check_existence(db=db, server_id=server_id):
+        return crud.get_server_total_messages(server_id=server_id, after=after, db=db)
 
 
 @app.get("/stats/server/{server_id}")
 def get_server_stats(server_id: int, db: Session = Depends(get_db)):
-    return crud.get_server_stats(server_id=server_id, db=db)
+    if check_existence(db=db, server_id=server_id):
+        return crud.get_server_stats(server_id=server_id, db=db)
+
+
+"""
+    WIP
+"""
+
+
+@app.get("/stats/messages-amount/")
+def get_messages_total_days(
+    server_id: int, channel_id: int = None, user_id: int = None, days: int = 0, db: Session = Depends(get_db)
+):
+    """
+    Get amount of messages per server/channel/user/user+channel
+
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id: Discord user id.
+            days: Amount of days, 0 for today, 1 for yesterday, -1 for all.
+            db: Database session.
+        Returns:
+            {"result": <amount of messages>}
+    """
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
+        query = db.query(models.Message).filter_by(server_id=server_id, is_deleted=0)
+        if channel_id:
+            query = query.filter_by(channel_id=channel_id, is_deleted=0)
+        if user_id:
+            query = query.filter_by(author_id=user_id)
+        # If user passes days as 0 or below 0, treat it as "query all days".
+        if days >= 0:
+            today = datetime.date.today()
+            back = today - datetime.timedelta(days=days) if days > 0 else today
+            # date = f"date >= DATETIME ('now', '-{days + 1} days') AND" if days >= 1 else ""
+            query = query.filter(models.Message.date_utc >= back)
+        return {"result": query.count()}
+
+
+@app.get("/stats/messages-amount-days")
+def get_messages_amount_days(
+    days: int, server_id: int, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db)
+):
+    """
+    Returns date and amount of messages for that day. Can filter by server/channel/user/channel+user.
+    Will query up to 90 days. Days where no messages are found will be added as 0.
+
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id: Discord user id.
+            days: Positive amount of days, 10 for past 10 days, 1 for today. Maximum of 90.
+            db: Database session.
+        Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>]}
+    """
+    # TODO calculate average, mean and append to return json COUNT DELETED? avg with del, avg without
+    # TODO same function for weekdays! so u get MO, TU,...
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
+        if days > 90 or days < 0:
+            days = 90
+
+        # 0 should be treated as today!
+        if days == 0:
+            days = 1
+
+        statement = text(
+            f"""SELECT DATE(date_utc), COUNT(DATE(date_utc)) 
+                             FROM message
+                             WHERE {get_conditional_where(server_id, channel_id, user_id)} AND is_deleted == 0
+                             GROUP BY DATE(date_utc) 
+                             ORDER BY DATE(date_utc) DESC
+                             LIMIT {days + 1}"""
+        )
+        res = list(db.execute(statement))
+
+        labels = []
+        data = []
+
+        # Query returns messages for days that messages exist, so you will get gaps like
+        # ('2020-12-30', 300), ('2020-12-20', 100). This leaves 10 days gap and gets another 8 days
+        # from the past. We want to fill those gaps with 0 messages as ('2020-12-29', 0)...
+        # This loop will iterate list of results, calculate time delta and fill gaps with new dates and 0 messages!
+        # Return is then limited to passed amount of days, since filled list may contain a lot more.
+        for i in range(len(res) - 1):
+            x = datetime.date.fromisoformat(res[i][0])
+            y = datetime.date.fromisoformat(res[i + 1][0])
+            delta = x - y
+            if delta.days > 1:
+                for i in range(delta.days):
+                    new_date = x - datetime.timedelta(days=i)
+                    labels.append(str(new_date))
+                    data.append(0)
+            else:
+                labels.append(res[i][0])
+                data.append(res[i][1])
+        labels = labels[:days]
+        data = data[:days]
+        # Reverse data to get from oldest to newest date.
+        return {"labels": labels[::-1], "data": data[::-1]}
