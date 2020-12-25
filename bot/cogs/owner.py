@@ -13,8 +13,11 @@ class Owner(commands.Cog):
     @commands.command()
     async def cogs(self, ctx):
         """Lists all .py files in cogs/ directory."""
-        cogs = [filename[:-3] for filename in os.listdir(os.path.join(ROOT_DIR, "cogs")) if filename.endswith(".py")]
-        await ctx.send(f"`available cogs: {', '.join(cogs)}`")
+        if is_owner(ctx.author.id):
+            cogs = [
+                filename[:-3] for filename in os.listdir(os.path.join(ROOT_DIR, "cogs")) if filename.endswith(".py")
+            ]
+            await ctx.send(f"`lilanalytics@matrix: available cogs: {', '.join(cogs)}`")
 
 
 def setup(client):

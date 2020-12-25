@@ -1,6 +1,5 @@
 import datetime
 import os
-import time
 from timeit import default_timer
 from typing import List
 
@@ -12,7 +11,7 @@ from bot.decorators import timer
 from bot.root import ROOT_DIR
 from bot.utils import is_owner
 
-# TODO README about this! without this intent you cannot get full members list easily.
+# Intent is needed to get full list of guild members, without intent guild.members() will only return bot instance!
 intents = discord.Intents.default()
 intents.presences = True
 client = commands.Bot(command_prefix=commands.when_mentioned_or(os.environ["COMMAND_PREFIX"]), intents=intents)
@@ -40,14 +39,14 @@ async def on_ready():
     await client.change_presence(activity=discord.Game(name=os.environ["STATUS_MESSAGE"]))  # Add status message.
     print("lil analytics: Bot is now running!")
 
+    print("lil analytics: Indexing channels and members...")
+    for guild in client.guilds:
+        await client.loop.create_task(background_parse_metadata(guild=guild))
+
     print("lil analytics: Background indexing of messages started!")
     time_before = datetime.datetime.utcnow() - datetime.timedelta(hours=24)
-
-    # for guild in client.guilds:
-    #    await client.loop.create_task(background_parse_metadata(guild=guild))
-
-    # for guild_id in [g.id for g in client.guilds]:
-    #    await client.loop.create_task(background_parse_history(client=client, guild_id=guild_id, after=time_before))
+    for guild_id in [g.id for g in client.guilds]:
+        await client.loop.create_task(background_parse_history(client=client, guild_id=guild_id, after=time_before))
 
 
 @client.command()

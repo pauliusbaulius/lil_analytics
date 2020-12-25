@@ -17,10 +17,10 @@
     <p>most active channel: #TODO</p>
 
     <div class="grid-canvas">
-        <canvas id="chart-b" class="canvas-long"></canvas>
-        <canvas id="chart-a" class="canvas-tall"></canvas>
-        <canvas id="chart-c" class="canvas-small"></canvas>
-        <canvas id="chart-d" class="canvas-medium"></canvas>
+        <canvas id="chart-b"></canvas>
+        <canvas id="chart-c"></canvas>
+        <canvas id="chart-a"></canvas>
+        <canvas id="chart-d"></canvas>
     </div>
 
 
@@ -102,6 +102,30 @@
         });
     }
 
+        // TODO make a func with variable for 14/30/90
+    const chartC = async () => {
+        const response = await fetch('/stats/messages-amount-days/?days=' + 90 + '&server_id=' + server_id);
+        const d = await response.json();
+        new Chart(document.getElementById("chart-c"), {
+            type: 'line',
+            data: {
+              labels: d["labels"],
+              datasets: [
+                {
+                  label: "# of messages",
+                  data: d["data"]
+                }
+              ]
+            },
+            options: {
+              legend: { display: false },
+              title: {
+                display: true,
+                text: 'amount of messages per day (' + 90 + ' days)'
+              }
+            }
+        });
+    }
 
 
 
@@ -110,6 +134,7 @@
     statC()
     chartA()
     chartB()
+    chartC()
 
 
 

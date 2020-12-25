@@ -1,0 +1,22 @@
+API:
+- mean/avg lines for messages per day
+- add mean/avg bars to total messages per channel
+- heatmap of message amount/hour/weekday for all time
+- breakdown of messages per weekday for 14/30/90/all days
+- most active user stat name/messages
+- most active channel stat name/messages
+- reactions by amount, sorted max to low.
+- top 3 reactions today
+- top reactions this week
+
+FRONTEND:
+- index.html -> list of guilds, dashboard.html -> stats for guild
+    [guild] -> /guilds/ -> list of guild_id/names -> index.html should have a list of guilds
+    - select channel
+        [channel]  - > /channels/<guild_id> -> list of channel_id/name -> loaded on page load dashboard/
+    - select member
+        [member] -> /members/<guild_id> -> list of member_id/name -> loaded on page load dashboard/
+- footer with links to github and description.
+
+FEATURES:
+- TIMEZONES! everything is utc now. i have no idea how to handle timezones "the right way", so im not going to do it yet.

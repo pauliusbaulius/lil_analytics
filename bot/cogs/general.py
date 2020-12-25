@@ -62,7 +62,6 @@ class ToolsGeneral(commands.Cog):
         embed = discord.Embed(title="lil analytics", description=desc, color=0xFFFF00)
         embed.add_field(name="Author:", value="pauliusbaulius", inline=False)
         # Shows the number of servers the bot is member of.
-        embed.add_field(name="Server count:", value=f"{len(self.client.guilds)}", inline=False)
         embed.add_field(
             name="Invite me:",
             value=f'[>click me<]({os.environ["INVITE_LINK"]})',
