@@ -2,14 +2,9 @@
 
 **VERSION BETA**
 
-Message metadata analytics bot. Collects messages on write/edit/delete and displays nice graphs. 
+Message metadata analytics bot. Collects messages on write/edit/delete and displays charts. This version of lil analytics is split into two docker containers, one for bot and another for api. Previous version used matplotlib to generate images and upload them to discord. This version uses fastapi and chart.js to create dashboards. Everything works 100000x faster.
 
-Answers deep questions about your friends/users:
-
-- Who nolifes the most?
-- Who goes to sleep at 3am?
-- Which channels are worth keeping?
-
+You can check master branch to find the old version, which will be kept as an archive. (It works btw.)
 
 
 ![dashboard](dashboard.png)
@@ -30,7 +25,8 @@ Answers deep questions about your friends/users:
 
 .gdpr <user mention>
     delete all messages in the called channel by mentioned user.
-    no undo. handle with care.
+    no undo. handle with care. very slow, since all messages have to be iterated.
+    might take DAYS to complete. discord rate-limits history iteration :^)
 
 .c <a;b;c>
     choose between choices separated by ";"

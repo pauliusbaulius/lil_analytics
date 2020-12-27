@@ -25,6 +25,11 @@
         <canvas id="chart-d"></canvas>
     </div>
 
+    <!-- TODO select for user and channel, should set channel_id and user_id!. graphs will generate on select. -->
+    <select style="display: none" onchange="generateUserStats(this.value)">
+        <option>---</option>
+        <!-- for user in users ... -->
+    </select>
 
 <script>
 
