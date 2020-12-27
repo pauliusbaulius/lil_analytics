@@ -1,6 +1,6 @@
 # lil_analytics
 
-**VERSION ALPHA**
+**VERSION BETA**
 
 Message metadata analytics bot. Collects messages on write/edit/delete and displays nice graphs. 
 

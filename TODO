@@ -10,8 +10,8 @@ API:
 - top reactions this week
 
 FRONTEND:
-- index.html -> list of guilds, dashboard.html -> stats for guild
-    [guild] -> /guilds/ -> list of guild_id/names -> index.html should have a list of guilds
++ index.html -> list of guilds, dashboard.html -> stats for guild
+    + [guild] -> /guilds/ -> list of guild_id/names -> index.html should have a list of guilds
     - select channel
         [channel]  - > /channels/<guild_id> -> list of channel_id/name -> loaded on page load dashboard/
     - select member
@@ -23,4 +23,4 @@ FEATURES:
 - non-root docker containers
 - logging
 - promtail->loki exporter example for your docker spyware stack
-- dashboard slector for all servers!
++ dashboard slector for all servers!
