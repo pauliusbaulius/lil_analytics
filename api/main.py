@@ -74,16 +74,21 @@ async def get_open_api_endpoint():
 
 
 @app.get("/", response_class=HTMLResponse)
-def index(request: Request):
-    # TODO all chart generation data is parsed here?
+def index(request: Request, db: Session = Depends(get_db)):
     context = {
         "request": request,
         "timestamp": datetime.datetime.utcnow(),
-        "chartadata": [1, 2],
-        "chartalabels": ["test", "best"],
+        "servers": crud.get_servers(db=db)
     }
     return templates.TemplateResponse("index.html", context)
 
+@app.get("/dashboard/{server_id}", response_class=HTMLResponse)
+def dashboard(request: Request, server_id: int, db: Session = Depends(get_db)):
+    context = {
+        "request": request,
+        "server_id": server_id
+    }
+    return templates.TemplateResponse("dashboard.html", context)
 
 """
     SERVER

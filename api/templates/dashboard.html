@@ -1,0 +1,141 @@
+<html>
+<head>
+    <title>lil analytics</title>
+    <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
+    <link rel="shortcut icon" type="image/jpg" href="{{ url_for('static', path='/favicon.png') }}"/>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+    <script type="text/javascript" src=""></script>
+</head>
+<body>
+    <h1>lil analytics dashboard</h1>
+
+    <p>server <strong id="statBname"></strong> is owned by <strong id="statBowner"></strong>.</p>
+    <p>total messages: <strong id="statA"></strong> deleted*: <strong id="statAdeleted"></strong></p>
+    <p class="hint">*deleted messages are counted since bot join date, total messages are indexed including the past!</p>
+    <p>messages today: <strong id="statC"></strong></p>
+    <p>most active user today: #TODO</p>
+    <p>most active channel today: #TODO</p>
+
+    <!-- Charts go in this div. -->
+    <div class="grid-canvas">
+        <canvas id="chart-b"></canvas>
+        <canvas id="chart-c"></canvas>
+        <canvas id="chart-a"></canvas>
+        <canvas id="chart-d"></canvas>
+    </div>
+
+
+<script>
+
+    const timer = ms => new Promise(res => setTimeout(res, ms))
+    let server_id = `{{ server_id }}`;
+
+    const statA = async () => {
+        const response = await fetch('/stats/server-total-messages/' + server_id);
+        const d = await response.json();
+        document.getElementById("statA").textContent=d["total_messages"]
+        document.getElementById("statAdeleted").textContent=d["total_deleted"]
+
+    }
+
+    const statB = async () => {
+        const response = await fetch('/stats/server/' + server_id);
+        const d = await response.json();
+        document.getElementById("statBname").textContent=d["name"]
+        document.getElementById("statBowner").textContent=d["owner_name"]
+    }
+
+    const statC = async () => {
+        const response = await fetch('/stats/messages-amount-days/?days=1&server_id=' + server_id);
+        const d = await response.json();
+        document.getElementById("statC").textContent=d["data"][0]
+    }
+
+    const chartA = async () => {
+        const response = await fetch('/charts/server-channel-messages/' + server_id);
+        const dataChartA = await response.json(); //extract JSON from the http response
+        new Chart(document.getElementById("chart-a"), {
+            type: 'horizontalBar',
+            data: {
+              labels: dataChartA["labels"],
+              datasets: [
+                {
+                  label: "# of messages",
+                  data: dataChartA["data"]
+                }
+              ]
+            },
+            options: {
+              legend: { display: false },
+              title: {
+                display: true,
+                text: 'total amount of messages per channel'
+              }
+            }
+        });
+    }
+
+    const chartB = async () => {
+        const response = await fetch('/stats/messages-amount-days/?days=' + 14 + '&server_id=' + server_id);
+        const d = await response.json();
+        new Chart(document.getElementById("chart-b"), {
+            type: 'line',
+            data: {
+              labels: d["labels"],
+              datasets: [
+                {
+                  label: "# of messages",
+                  data: d["data"]
+                }
+              ]
+            },
+            options: {
+              legend: { display: false },
+              title: {
+                display: true,
+                text: 'amount of messages per day (' + 14 + ' days)'
+              }
+            }
+        });
+    }
+
+    const chartC = async () => {
+        const response = await fetch('/stats/messages-amount-days/?days=' + 90 + '&server_id=' + server_id);
+        const d = await response.json();
+        new Chart(document.getElementById("chart-c"), {
+            type: 'line',
+            data: {
+              labels: d["labels"],
+              datasets: [
+                {
+                  label: "# of messages",
+                  data: d["data"]
+                }
+              ]
+            },
+            options: {
+              legend: { display: false },
+              title: {
+                display: true,
+                text: 'amount of messages per day (' + 90 + ' days)'
+              }
+            }
+        });
+    }
+
+    <!-- FIXME no idea how to make proper "live" dashboard without permanent 15s sleep loop. -->
+    async function showLiveDashboard(event) {
+        while (1) {
+            statA()
+            statB()
+            statC()
+            chartA()
+            chartB()
+            chartC()
+            await timer(15000)
+        }
+    }
+    showLiveDashboard()
+</script>
+</body>
+</html>

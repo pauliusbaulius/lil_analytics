@@ -1,6 +1,6 @@
 # lil_analytics
 
-**version alpha - stuff will break**
+**VERSION ALPHA**
 
 Message metadata analytics bot. Collects messages on write/edit/delete and displays nice graphs. 
 
@@ -48,12 +48,8 @@ Answers deep questions about your friends/users:
 - Chart.js for dashboard graphs.
 
 
-## todo features
-- [x] api and bot should have separate pipenvs
-- [ ] non-root docker containers
-- [ ] logging
-- [ ] promtail->loki exporter example for your docker spyware stack
-- [ ] dashboard slector for all servers!
+## TODO
+Read TODO file if you want to help :')
 
 ## install && deploy
 1. Create and fill out env file: `$ mv .env.example .env`!

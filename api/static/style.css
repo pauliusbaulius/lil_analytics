@@ -3,7 +3,7 @@
 }
 
 body {
-    max-width: 1200px;
+    max-width: 900px;
     font-size: 16px;
     margin: 0 auto;
     padding: 50px;
@@ -42,4 +42,13 @@ canvas {
 .grid-canvas {
     display: grid;
    /* grid-template-columns: repeat( auto-fill, minmax(0, 1fr) ); */
+}
+
+ul {
+    list-style-type: "+ ";
+
+}
+
+li a {
+    text-decoration: none;
 }

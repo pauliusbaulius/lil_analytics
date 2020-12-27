@@ -20,3 +20,7 @@ FRONTEND:
 
 FEATURES:
 - TIMEZONES! everything is utc now. i have no idea how to handle timezones "the right way", so im not going to do it yet.
+- non-root docker containers
+- logging
+- promtail->loki exporter example for your docker spyware stack
+- dashboard slector for all servers!

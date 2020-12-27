@@ -2,145 +2,16 @@
 <head>
     <title>lil analytics</title>
     <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
-    <script type="text/javascript" src=""></script>
+    <link rel="shortcut icon" type="image/jpg" href="{{ url_for('static', path='/favicon.png') }}"/>
 </head>
 <body>
-    <h1>lil analytics dashboard</h1>
-    <p>utc time: <strong>{{ timestamp }}</strong></p>
-    <!-- TODO timezone picker, set var timezone and pass to query! modify queries to calculate offset! should pass -->
-    <p>server <strong id="statBname"></strong> is owned by <strong id="statBowner"></strong>.</p>
-    <p>total messages: <strong id="statA"></strong> deleted*: <strong id="statAdeleted"></strong></p>
-    <p class="hint">*deleted messages are counted since bot join date, total messages are indexed including the past!</p>
-    <p>messages today: <strong id="statC"></strong></p>
-    <p>most active user: #TODO</p>
-    <p>most active channel: #TODO</p>
+    <h1>lil analytics</h1>
 
-    <div class="grid-canvas">
-        <canvas id="chart-b"></canvas>
-        <canvas id="chart-c"></canvas>
-        <canvas id="chart-a"></canvas>
-        <canvas id="chart-d"></canvas>
-    </div>
-
-
-<script>
-    // TODO should have a menu to select server from available servers! then set this value to that.
-    // pass all server_id and their names into template, create a dropdown menu, when on select -> run functions!
-    // set this server_id to selected_id!
-    var server_id = '686598539136073780';
-    var days = 14;
-
-    const statA = async () => {
-        const response = await fetch('/stats/server-total-messages/' + server_id);
-        const d = await response.json();
-        document.getElementById("statA").textContent=d["total_messages"]
-        document.getElementById("statAdeleted").textContent=d["total_deleted"]
-
-    }
-
-    const statB = async () => {
-        const response = await fetch('/stats/server/' + server_id);
-        const d = await response.json();
-        document.getElementById("statBname").textContent=d["name"]
-        document.getElementById("statBowner").textContent=d["owner_name"]
-    }
-
-    const statC = async () => {
-        const response = await fetch('/stats/messages-amount-days/?days=1&server_id=' + server_id);
-        const d = await response.json();
-        document.getElementById("statC").textContent=d["data"][0]
-    }
-
-
-
-    const chartA = async () => {
-        const response = await fetch('/charts/server-channel-messages/' + server_id);
-        const dataChartA = await response.json(); //extract JSON from the http response
-        new Chart(document.getElementById("chart-a"), {
-            type: 'horizontalBar',
-            data: {
-              labels: dataChartA["labels"],
-              datasets: [
-                {
-                  label: "# of messages",
-                  data: dataChartA["data"]
-                }
-              ]
-            },
-            options: {
-              legend: { display: false },
-              title: {
-                display: true,
-                text: 'total amount of messages per channel'
-              }
-            }
-        });
-    }
-
-    const chartB = async () => {
-        const response = await fetch('/stats/messages-amount-days/?days=' + days + '&server_id=' + server_id);
-        const d = await response.json();
-        new Chart(document.getElementById("chart-b"), {
-            type: 'line',
-            data: {
-              labels: d["labels"],
-              datasets: [
-                {
-                  label: "# of messages",
-                  data: d["data"]
-                }
-              ]
-            },
-            options: {
-              legend: { display: false },
-              title: {
-                display: true,
-                text: 'amount of messages per day (' + days + ' days)'
-              }
-            }
-        });
-    }
-
-        // TODO make a func with variable for 14/30/90
-    const chartC = async () => {
-        const response = await fetch('/stats/messages-amount-days/?days=' + 90 + '&server_id=' + server_id);
-        const d = await response.json();
-        new Chart(document.getElementById("chart-c"), {
-            type: 'line',
-            data: {
-              labels: d["labels"],
-              datasets: [
-                {
-                  label: "# of messages",
-                  data: d["data"]
-                }
-              ]
-            },
-            options: {
-              legend: { display: false },
-              title: {
-                display: true,
-                text: 'amount of messages per day (' + 90 + ' days)'
-              }
-            }
-        });
-    }
-
-
-
-    statA()
-    statB()
-    statC()
-    chartA()
-    chartB()
-    chartC()
-
-
-
-
-
-</script>
-
+    <h2>guild dashboards:</h2>
+    <ul>
+        {% for server in servers %}
+            <li><a href="/dashboard/{{ server.id }}">{{server.name}}</a></li>
+        {% endfor %}
+    </ul>
 </body>
 </html>
