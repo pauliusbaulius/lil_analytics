@@ -411,5 +411,16 @@ async def index(ctx):
         await ctx.send(ctx.message.author.id)
 
 
+@client.event
+async def on_guild_join(guild):
+    # When bot joins a guild, messages of past 14 days are indexed!
+    time_before = datetime.datetime.utcnow() - datetime.timedelta(days=14)
+    await background_parse_history(client=client, guild_id=guild.id, after=time_before)
+
+
+@client.event
+async def on_guild_remove(guild):
+    await api.delete_server(server_id=guild.id)
+
 if __name__ == "__main__":
     start_bot()

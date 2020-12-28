@@ -73,7 +73,7 @@ def create_server(db: Session, server: schemas.ServerCreate):
 
 def delete_server(server_id: int, db: Session) -> Optional[models.Server]:
     """
-    Given server_id, sets is_deleted to True for the server and all messages related to the server.
+    Given server_id, sets is_deleted to True for the server and all messages/channels related to the server.
     """
     db_server = db.query(models.Server).filter(models.Server.id == server_id).first()
     try:
@@ -81,6 +81,10 @@ def delete_server(server_id: int, db: Session) -> Optional[models.Server]:
         db_server_messages = db.query(models.Message).filter(models.Message.server_id == server_id).all()
         for message in db_server_messages:
             message.is_deleted = True
+        db.commit()
+        db_server_channels = db.query(models.Channel).filter(models.Channel.server_id == server_id).all()
+        for channel in db_server_channels:
+            channel.is_deleted = True
         db.commit()
         return db_server
     except ValueError:

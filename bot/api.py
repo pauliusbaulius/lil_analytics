@@ -82,3 +82,7 @@ async def delete_reactions(message_id: int):
 
 async def delete_channel(channel_id: int):
     _ = requests.delete(url=f"http://api:5000/channel/?channel_id={channel_id}" + "&" + API_KEY[1:])
+
+
+def delete_server(server_id):
+    _ = requests.delete(url=f"http://api:5000/server/?server_id={server_id}" + "&" + API_KEY[1:])
