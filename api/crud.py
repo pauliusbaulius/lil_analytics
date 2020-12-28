@@ -327,11 +327,11 @@ def get_messages_amount_days(days: int, db: Session, server_id: int, channel_id:
 
     statement = text(
         f"""SELECT DATE(date_utc), COUNT(DATE(date_utc)) 
-                         FROM message
-                         WHERE {get_conditional_where(server_id, channel_id, user_id)} AND is_deleted == 0
-                         GROUP BY DATE(date_utc) 
-                         ORDER BY DATE(date_utc) DESC
-                         LIMIT {days + 1}"""
+            FROM message
+            WHERE {get_conditional_where(server_id, channel_id, user_id)} AND is_deleted == 0
+            GROUP BY DATE(date_utc) 
+            ORDER BY DATE(date_utc) DESC
+            LIMIT {days + 1}"""
     )
     res = list(db.execute(statement))
 

@@ -53,7 +53,7 @@
     }
 
     const statC = async () => {
-        const response = await fetch('/stats/messages-amount-days/?days=1&server_id=' + server_id);
+        const response = await fetch('/stats/messages-by-days/?days=1&server_id=' + server_id);
         const d = await response.json();
         document.getElementById("statC").textContent=d["data"][0]
     }
@@ -85,7 +85,6 @@
     const chartB = async () => {
         const response = await fetch('/stats/messages-by-days/?days=' + 14 + '&server_id=' + server_id);
         const d = await response.json();
-        console.log(d)
         new Chart(document.getElementById("chart-b"), {
             type: 'line',
             data: {
@@ -102,24 +101,7 @@
               title: {
                 display: true,
                 text: 'amount of messages per day (' + 14 + ' days)'
-              },
-                plugins: {
-                    annotation: {
-                        annotations: {
-                            average: {
-                                type: 'line',
-                                scaleID: "y",
-                                value: d["average"],
-                                borderColor: 'red',
-                                borderWidth: 2,
-                                label: {
-                                    enabled: true,
-                                    content: 'average'
-                                }
-                            }
-                        }
-                    }
-                }
+              }
             }
         });
     }

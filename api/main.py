@@ -341,7 +341,7 @@ def get_messages_amount_days(
             {"labels": [<channel names>], "data": [<amount of messages>], "average": <number>, "median": <number>}
     """
     if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
-        crud.get_messages_amount_days(server_id=server_id, channel_id=channel_id, user_id=user_id, days=days, db=db)
+        return crud.get_messages_amount_days(server_id=server_id, channel_id=channel_id, user_id=user_id, days=days, db=db)
 
 
 @app.get("/stats/messages-by-weekday/")
