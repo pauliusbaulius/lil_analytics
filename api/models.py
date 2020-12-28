@@ -9,6 +9,10 @@ class Server(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
     owner_id = Column(Integer, ForeignKey("user.id"))
+    # TODO store more metadata
+    # icon_url = Column(String, null=True, blank=True)
+    # created_at = Column(DateTime)
+    # description = Column(String)
     is_deleted = Column(Boolean, default=False)
 
 
@@ -70,4 +74,6 @@ class Reaction(Base):
     reacted_id = Column(Integer, primary_key=True)
     reaction_id = Column(String, primary_key=True)
     reaction_hash = Column(Integer)
+    # TODO save image of reaction, because you cannot display <:pepe_based:698575365337120838> in website...
+    # url = Column(String)  # https://discordpy.readthedocs.io/en/latest/api.html?highlight=reaction#discord.Emoji
     is_deleted = Column(Boolean, default=False)

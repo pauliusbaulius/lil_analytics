@@ -1,10 +1,62 @@
 import datetime
-from typing import List, Optional
+import statistics
+from typing import Dict, List, Optional
 
+from fastapi import HTTPException
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from api import models, schemas
-from api.database import SessionLocal
+
+
+def get_conditional_where(server_id: int, channel_id: int = None, user_id: int = None) -> str:
+    """
+    Builds WHERE clause parameters for SQL query given guild, user, channel id combinations.
+    If you want WHERE channel_id == ?, pass guild_id
+    If you want WHERE channel_id == ? AND user_id == ?, pass guild_id and user_id
+        Parameters:
+            server_id: Integer id of the server
+            channel_id: Integer id of the channel
+            user_id: Integer id of the user
+        Returns:
+            SQL WHERE parameters matching given ids without WHERE keyword.
+    """
+    if channel_id and user_id:
+        where = f"server_id == {server_id} AND channel_id == {channel_id} AND author_id == {user_id}"
+    elif user_id:
+        where = f"server_id == {server_id} AND author_id == {user_id}"
+    elif channel_id:
+        where = f"server_id == {server_id} AND channel_id == {channel_id}"
+    else:
+        where = f"server_id == {server_id}"
+    return where
+
+
+def check_existence(db: Session, server_id: int = None, channel_id: int = None, user_id: int = None) -> int:
+    """
+    Checks whether given server/channel/user id exist in the database.
+    If they do not, HTTP error is raised!
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id: Discord user id.
+            db: Database session.
+        Returns:
+            Boolean whether given parameters exist or not.
+    """
+    server = get_server_by_id(id=server_id, db=db)
+    if not server:
+        raise HTTPException(status_code=404, detail=f"server with id: {server_id} does not exist.")
+    if channel_id:
+        channel = get_channel_by_id(db=db, id=channel_id)
+        if not channel:
+            raise HTTPException(status_code=404, detail=f"channel with id: {channel_id} does not exist.")
+    if user_id:
+        user = get_user_by_id(db=db, user_id=user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail=f"user with id: {user_id} does not exist.")
+    return True
+
 
 """
     SERVER
@@ -22,12 +74,10 @@ def create_server(db: Session, server: schemas.ServerCreate):
 def delete_server(server_id: int, db: Session) -> Optional[models.Server]:
     """
     Given server_id, sets is_deleted to True for the server and all messages related to the server.
-    If
     """
     db_server = db.query(models.Server).filter(models.Server.id == server_id).first()
     try:
         db_server.is_delete = True
-        # FIXME need to soft delete all messages of the server, but there must be a more efficient way than iteration!
         db_server_messages = db.query(models.Message).filter(models.Message.server_id == server_id).all()
         for message in db_server_messages:
             message.is_deleted = True
@@ -71,7 +121,6 @@ def delete_channel(channel_id: int, db: Session):
     db_channel = db.query(models.Channel).filter(models.Channel.id == channel_id).first()
     try:
         db_channel.is_deleted = True
-        # FIXME need to soft delete all messages of the channel, but there must be a more efficient way than iteration!
         db_server_messages = db.query(models.Message).filter(models.Message.channel_id == channel_id).all()
         for message in db_server_messages:
             message.is_deleted = True
@@ -150,7 +199,6 @@ def get_messages(
     user_id: int = None,
     limit: int = 100,
 ) -> List[models.Message]:
-
     query = db.query(models.Message)
     if channel_id:
         print(channel_id)
@@ -265,159 +313,141 @@ def get_reactions(
 
 
 """
-    DATA VISUALIZATION QUERIES HAPPEN HERE
-"""
-
-
-def get_server_channel_messages(server_id: int, db: Session, after: str = None):
-    """
-    Queries total messages for each channel for given server_id.
-    Returns dictionary of labels and data for chart.js.
-    Can give a date to filter from a date in history.
-
-    How:
-        1. Get all channels for matching server_id from table "channel"
-        2. Count total messages for each channel_id!
-        3. Channel names are labels, data is amount of messages per channel.
-    """
-    # TODO calculate average, mean and append to return json
-    labels = []
-    data = []
-
-    query = db.query(models.Channel).filter_by(server_id=server_id, is_deleted=0).all()
-    for channel in query:
-        labels.append(channel.name)
-        # Count amount of messages.
-        data.append(db.query(models.Message).filter_by(channel_id=channel.id, is_deleted=0).count())
-
-    return {"labels": labels, "data": data}
-
-
-def get_server_total_messages(server_id: int, db: Session, after: str = None):
-    messages = db.query(models.Message).filter_by(server_id=server_id, is_deleted=0).count()
-    deleted = db.query(models.Message).filter_by(server_id=server_id, is_deleted=1).count()
-    return {"server_id": server_id, "total_messages": messages, "total_deleted": deleted}
-
-
-def get_server_stats(server_id: int, db: Session):
-    # TODO add more fields to server like url, voice channels, whatever else
-    server = db.query(models.Server).filter_by(id=server_id).first()
-    owner = db.query(models.User).filter_by(id=server.owner_id).first()
-    return {"server_id": server_id, "name": server.name, "owner_name": owner.username}
-
-
-def get_server_message_growth(server_id: int, db: Session, days: int = 7):
-    # TODO call get_Server_total_messages with appropriate after dates!
-    # so for 2 days -> today and today -1
-    # for 7 days -> today t-1 t-2 t-3 t-4 t-5 t-6
-    # if -1, query all and append to other results, so you get growth with past messages!
-    # append -1 to the oldest, and then accumulate over rest! so t-5 = t-6 and t-6 is t-6+-1
-    pass
-
-
-"""
     FROM OLD VERSION
 """
 
 
-def get_messages_per_day(guild_id: int, days: int, channel_id=None, user_id: int = None) -> list:
-    """Returns list of tuples of total messages for given amount of days. If channel id is given, returns total
-    messages per day for that channel.
-    If days are 0 or less, stats for all days will be returned!
-    If you want to see total messages per day in all channels for last 7 days or you want to see total messages in a
-    channel for past 14 days. There is no limit how long back you want to go. If you give 99999 it will return all
-    counts for all days that are logged in the database.
+def get_messages_amount_days(days: int, db: Session, server_id: int, channel_id: int = None, user_id: int = None):
+    if days > 90 or days < 0:
+        days = 90
+
+    # 0 should be treated as today!
+    if days == 0:
+        days = 1
+
+    statement = text(
+        f"""SELECT DATE(date_utc), COUNT(DATE(date_utc)) 
+                         FROM message
+                         WHERE {get_conditional_where(server_id, channel_id, user_id)} AND is_deleted == 0
+                         GROUP BY DATE(date_utc) 
+                         ORDER BY DATE(date_utc) DESC
+                         LIMIT {days + 1}"""
+    )
+    res = list(db.execute(statement))
+
+    labels = []
+    data = []
+
+    # Query returns messages for days that messages exist, so you will get gaps like
+    # ('2020-12-30', 300), ('2020-12-20', 100). This leaves 10 days gap and gets another 8 days
+    # from the past. We want to fill those gaps with 0 messages as ('2020-12-29', 0)...
+    # This loop will iterate list of results, calculate time delta and fill gaps with new dates and 0 messages!
+    # Return is then limited to passed amount of days, since filled list may contain a lot more.
+    for i in range(len(res) - 1):
+        x = datetime.date.fromisoformat(res[i][0])
+        y = datetime.date.fromisoformat(res[i + 1][0])
+        delta = x - y
+        if delta.days > 1:
+            for i in range(delta.days):
+                new_date = x - datetime.timedelta(days=i)
+                labels.append(str(new_date))
+                data.append(0)
+        else:
+            labels.append(res[i][0])
+            data.append(res[i][1])
+    labels = labels[:days]
+    data = data[:days]
+
+    average = sum(data) / len(data)
+    median = statistics.median(data)
+
+    # Reverse data to get from oldest to newest date.
+    return {"labels": labels[::-1], "data": data[::-1], "average": average, "median": median}
+
+
+def get_messages_growth_days(
+    db: Session, server_id: int, days: int, channel_id: int = None, user_id: int = None
+) -> Dict:
+    d = get_messages_amount_days(server_id=server_id, user_id=user_id, channel_id=channel_id, days=days, db=db)
+    data, _sum = [], 0
+    # Accumulate and replace old data with accumulated data.
+    for x in zip(d["labels"], d["data"]):
+        _sum += x[1]
+        data.append(_sum)
+    return {"labels": d["labels"], "data": data}
+
+
+def get_messages_per_month(db: Session, server_id: int, months: int, channel_id=None, user_id: int = None) -> Dict:
     """
-    where = get_conditional_where(guild_id=guild_id, user_id=user_id, channel_id=channel_id)
-
-    if days <= 0:
-        days = -1
-
-    sql = f"""SELECT DATE(date), COUNT(DATE(date)) 
-              FROM messages
-              WHERE {where} AND deleted == 0
-              GROUP BY DATE(date) 
-              ORDER BY DATE(date) DESC
-              LIMIT {days}"""
-
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
-    return data
-
-
-def get_messages_growth_days(guild_id: int, days: int, channel_id=None, user_id: int = None) -> list:
-    """Returns accumulated list of message growth for server, channel, user or user in channel per day.
-    Uses the function above to get message counts per day and then accumulates them. So day 2 will have count for day 2
-    and count of day 1. Day 3 will have day 2 + day 1...
-    """
-    data = get_messages_per_day(guild_id=guild_id, user_id=user_id, channel_id=channel_id, days=days)
-
-    new_data = []
-    sum_ = 0
-    for x in reversed(data):
-        sum_ += x[1]
-        new_data.append((x[0], sum_))
-
-    return list(new_data)
-
-
-def get_messages_per_month(guild_id: int, months: int, channel_id=None, user_id: int = None) -> list:
-    """Returns messages written in a month in a server, channel, by user or by user in a specific channel.
+    Returns messages written in a month in a server, channel, by user or by user in a specific channel.
     If months are -1, stats for all month will be returned.
     """
-    where = get_conditional_where(guild_id=guild_id, user_id=user_id, channel_id=channel_id)
+    where = get_conditional_where(server_id=server_id, user_id=user_id, channel_id=channel_id)
 
     if months <= 0:
         months = -1
 
-    sql = f"""SELECT strftime('%Y-%m', date), COUNT(strftime('%Y-%m', date)) 
-              FROM messages
-              WHERE {where} AND deleted == 0
+    statement = text(
+        f"""SELECT strftime('%Y-%m', date_utc), COUNT(strftime('%Y-%m', date_utc)) 
+              FROM message
+              WHERE {where} AND is_deleted == 0
               GROUP BY 1
               ORDER BY 1 DESC
               LIMIT {months}"""
+    )
 
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
-    return data
+    res = list(db.execute(statement))
 
+    labels = []
+    data = []
 
-def get_messages_growth_months(guild_id: int, months: int, channel_id=None, user_id: int = None) -> list:
-    """Returns a list of accumulative values for server/channel/user/user in a channel for a given amount of months.
-    Amount of months can be specified. -1 returns all months since creation of the server (if messages are indexed).
-    """
-    data = get_messages_per_month(guild_id=guild_id, months=months, channel_id=channel_id, user_id=user_id)
+    for x in res:
+        labels.append(x[0])
+        data.append(x[1])
 
-    new_data = []
-    sum_ = 0
-    for x in reversed(data):
-        sum_ += x[1]
-        new_data.append((x[0], sum_))
-
-    return list(new_data)
+    return {"labels": labels[::-1], "data": data[::-1]}
 
 
-def get_messages_by_hour(guild_id: int, user_id: int = None, channel_id: int = None) -> list:
+def get_messages_growth_months(db: Session, server_id: int, months: int, channel_id=None, user_id: int = None) -> Dict:
+    d = get_messages_per_month(server_id=server_id, months=months, channel_id=channel_id, user_id=user_id, db=db)
+    print(d)
+    data, _sum = [], 0
+    for x in zip(d["labels"], d["data"]):
+        _sum += x[1]
+        data.append(_sum)
+    return {"labels": d["labels"], "data": data}
+
+
+def get_messages_by_hour(db: Session, server_id: int, user_id: int = None, channel_id: int = None) -> Dict:
     """Returns total messages per hour for all server, channel or user.
     If both channel id and user id are given, returns data for user in that channel.
     """
-    where = get_conditional_where(guild_id=guild_id, user_id=user_id, channel_id=channel_id)
+    where = get_conditional_where(server_id=server_id, user_id=user_id, channel_id=channel_id)
 
-    sql = f"""SELECT strftime('%H', date), COUNT(strftime('%H', date)) 
-              FROM messages
-              WHERE {where} AND deleted == 0
+    statement = text(
+        f"""SELECT strftime('%H', date_utc), COUNT(strftime('%H', date_utc)) 
+              FROM message
+              WHERE {where} AND is_deleted == 0
               GROUP BY 1
               ORDER BY 1 ASC"""
+    )
 
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
-    return data
+    res = list(db.execute(statement))
+
+    labels = []
+    data = []
+
+    for x in res:
+        labels.append(x[0])
+        data.append(x[1])
+
+    return {"labels": labels, "data": data}
 
 
-def get_messages_by_hour_days(guild_id: int, days: int, user_id: int = None, channel_id: int = None) -> list:
+@DeprecationWarning
+def get_messages_by_hour_days(
+    db: Session, server_id: int, days: int, user_id: int = None, channel_id: int = None
+) -> Dict:
     """Returns total messages per hour for all server, channel or user within a range in days.
     If both channel id and user id are given, returns data for user in that channel.
 
@@ -426,159 +456,203 @@ def get_messages_by_hour_days(guild_id: int, days: int, user_id: int = None, cha
         Returns:
 
     """
-    where = get_conditional_where(guild_id=guild_id, user_id=user_id, channel_id=channel_id)
+    where = get_conditional_where(server_id=server_id, user_id=user_id, channel_id=channel_id)
 
     # If user passes days as 0 or below 0, treat it as "query all days".
     date = f"date >= DATETIME ('now', '-{days + 1} days') AND" if days >= 1 else ""
 
-    sql = f"""SELECT strftime('%H', date) AS hour
-              ,COUNT(strftime('%H', date))
+    statement = text(
+        f"""SELECT strftime('%H', date_utc) AS hour
+              ,COUNT(strftime('%H', date_utc))
               FROM (
                   SELECT *
-                  FROM messages
-                  WHERE {date} {where} AND deleted == 0
+                  FROM message
+                  WHERE {date} {where} AND is_deleted == 0
                   ORDER BY DATE DESC
                     )
               GROUP BY hour
               ORDER BY hour ASC"""
+    )
 
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
-    return data
+    res = list(db.execute(statement))
+
+    labels = []
+    data = []
+
+    for x in res:
+        labels.append(x[0])
+        data.append(x[1])
+
+    return {"labels": labels, "data": data}
 
 
-def get_user_most_active(guild_id: int, amount: int, channel_id: int = None, days: int = -1) -> list:
+def get_user_most_active(db: Session, server_id: int, amount: int, channel_id: int = None, days: int = -1) -> list:
     """Returns given amount of users by their messages in the server or channel in descending order.
     Can limit amount of returned users. Passing amount as -1 will return all users.
     """
+    if days == 0:
+        days = 1
+
+    if days < 0:
+        days = -1
 
     # If user passes days as 0 or below 0, treat it as "query all days".
     date = (
-        f"(SELECT * FROM messages WHERE date >= DATETIME ('now', '-{days + 1} days')) messages"
+        f"(SELECT * FROM message WHERE date_utc >= DATETIME ('now', '-{days + 1} days')) message"
         if days >= 1
-        else "messages"
+        else "message"
     )
 
     if channel_id:
-        sql = f"""SELECT count(messages.id), author_name 
-                  FROM {date}
-                  WHERE server_id == {guild_id} AND channel_id = {channel_id} AND deleted == 0
-                  GROUP BY author_name 
-                  ORDER BY count(id) DESC
+        statement = text(
+            f"""SELECT count(message_id), username
+                  FROM {date} JOIN user ON message.author_id == user.id
+                  WHERE server_id == {server_id} AND channel_id = {channel_id} AND is_deleted == 0
+                  GROUP BY author_id 
+                  ORDER BY count(message_id) DESC
                   LIMIT {amount}"""
+        )
     else:
-        sql = f"""SELECT count(messages.id), author_name 
-                  FROM {date}
-                  WHERE server_id == {guild_id} AND deleted == 0
-                  GROUP BY author_name 
-                  ORDER BY count(id) DESC
-                  LIMIT {amount}"""
+        statement = text(
+            f"""SELECT count(message_id), username
+                      FROM {date} JOIN user ON message.author_id == user.id
+                      WHERE server_id == {server_id} AND is_deleted == 0
+                      GROUP BY author_id 
+                      ORDER BY count(message_id) DESC
+                      LIMIT {amount}"""
+        )
 
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
-    return data
+    res = list(db.execute(statement))
 
+    labels = []
+    data = []
 
-def get_reactions_today(guild_id: int):
-    sql = f"""select count(), reaction_id
-                  from message_reactions join messages on message_reactions.id == messages.id
-                  where server_id == {guild_id} AND messages.deleted == 0 AND DATE(messages.date) == DATE('now')
-                  group by reaction_id
-                  order by count() desc"""
+    for x in res:
+        labels.append(x[1])
+        data.append(x[0])
 
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
-    return data
+    return {"labels": labels, "data": data}
 
 
-def get_reaction_given_counts(guild_id: int, user_id: int = None, channel_id: int = None) -> list:
-    """Returns a list of tuples for each reaction given by a user. If channel id is given, returns given reactions
-    for that channel only. Otherwise reactions for all messages in the server.
-    If you want to get received reactions, use the method above.
-    """
-    if channel_id and user_id:
-        where = f"server_id == {guild_id} AND channel_id == {channel_id} AND reacted_id == {user_id}"
-    elif user_id:
-        where = f"server_id == {guild_id} AND reacted_id == {user_id}"
-    elif channel_id:
-        where = f"server_id == {guild_id} AND channel_id == {channel_id}"
-    else:
-        where = f"server_id == {guild_id}"
+def get_reactions_today(db: Session, server_id: int):
+    statement = text(
+        f"""SELECT COUNT(), reaction_id
+                  FROM reaction JOIN message ON reaction.message_id == message.message_id
+                  WHERE server_id == {server_id} AND message.is_deleted == 0 AND DATE(message.date_utc) == DATE('now')
+                  GROUP BY reaction_id
+                  ORDER BY COUNT() DESC"""
+    )
 
-    sql = f"""select count(), reaction_id
-              from message_reactions join messages on message_reactions.id == messages.id
-              where {where} AND messages.deleted == 0
-              group by reaction_id
-              order by count() desc"""
+    res = list(db.execute(statement))
 
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
-    return data
+    labels = []
+    data = []
+
+    for x in res:
+        labels.append(x[1])
+        data.append(x[0])
+
+    return {"labels": labels, "data": data}
 
 
-def get_messages_by_weekday_days(guild_id: int, days: int, user_id: int = None, channel_id: int = None) -> list:
-    """Returns messages by weekday for server, channel, user or user in a channel. 0 is Sunday, 6 is Monday.
-    If parameter days is 0 or less, query is treated as query for all existing messages.
-    """
+def get_reaction_given_counts(db: Session, server_id: int, user_id: int = None, channel_id: int = None) -> list:
+    where = get_conditional_where(server_id=server_id, user_id=user_id, channel_id=channel_id)
 
-    # If user passes days as 0 or below 0, treat it as "query all days".
-    date = f"date >= DATETIME ('now', '-{days + 1} days') AND" if days >= 1 else ""
+    statement = text(
+        f"""select count(), reaction_id
+            FROM reaction JOIN message ON reaction.message_id == message.message_id
+            where {where} AND message.is_deleted == 0
+            group by reaction_id
+            order by count() desc"""
+    )
 
-    where = get_conditional_where(guild_id=guild_id, user_id=user_id, channel_id=channel_id)
+    res = list(db.execute(statement))
 
-    sql = f"""SELECT strftime('%w', date) AS day, COUNT(strftime('%w', date))
+    labels = []
+    data = []
+
+    for x in res:
+        labels.append(x[1])
+        data.append(x[0])
+
+    return {"labels": labels, "data": data}
+
+
+def get_messages_by_weekday(
+    db: Session, server_id: int, days: int, user_id: int = None, channel_id: int = None
+) -> list:
+    if days < 0:
+        days = -1
+
+    if days == 1 or days == 0:
+        days = 2
+
+    # If user passes days as below 0, treat it as "query all days".
+    date = f"date_utc >= DATETIME ('now', '-{days} days') AND" if days >= 1 else ""
+
+    where = get_conditional_where(server_id=server_id, user_id=user_id, channel_id=channel_id)
+
+    statement = text(
+        f"""SELECT strftime('%w', date_utc) AS day, COUNT(strftime('%w', date_utc))
               FROM (
                 SELECT *
-                FROM messages
-                WHERE {date} {where} AND deleted == 0
-                ORDER BY DATE DESC
+                FROM message
+                WHERE {date} {where} AND is_deleted == 0
+                ORDER BY date_utc DESC
                )
                GROUP BY day
                ORDER BY day ASC
               """
+    )
 
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
+    res = list(db.execute(statement))
+
+    labels = []
+    data = []
+
+    for x in res:
+        labels.append(x[1])
+        data.append(x[0])
 
     days = {0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday"}
 
     # Convert integer to weekday and return list shifted by one day, so monday is first, saturday is last.
-    data = [(days[int(x[0])], x[1]) for x in data]
-    return data[1:] + [data[0]]
+    data = [days[int(x)] for x in data]
+    if len(data) > 1:
+        return {"labels": labels[1:] + [labels[0]], "data": data[1:] + [data[0]]}  # Switch Sunday to back of the list!
+    return {"labels": labels, "data": data}
 
 
-def get_message_hour_weekday_heatmap(guild_id: int, channel_id: int = None, user_id: int = None):
-    """Returns a list of tuples (hour, weekday, amount of messages) for each hour and weekday of the week as a map.
-    Considers all messages in the database for this query. Not limited by day.
-    Used to build a heat map of message distribution by hour/weekday.
-    Arguments:
-        guild_id: Integer id of the server
-        channel_id: Integer id of the channel
-        user_id: Integer id of the user
-    Returns:
-        (hour 00-23, weekday Monday-Sunday, amount of messages in that hour/weekday)
-    """
-    where = get_conditional_where(guild_id=guild_id, channel_id=channel_id, user_id=user_id)
+def get_heatmap(db: Session, server_id: int, channel_id: int = None, user_id: int = None):
+    where = get_conditional_where(server_id=server_id, user_id=user_id, channel_id=channel_id)
 
-    sql = f"""SELECT strftime('%H', date) AS hour, 
-                     strftime('%w', date) AS weekday, 
-                     COUNT(strftime('%H', date)) as amount
-              FROM messages
-              WHERE {where} AND deleted == 0
+    statement = text(
+        f"""SELECT strftime('%H', date_utc) AS hour, 
+                     strftime('%w', date_utc) AS weekday, 
+                     COUNT(strftime('%H', date_utc)) as amount
+              FROM message
+              WHERE {where} AND is_deleted == 0
               GROUP BY hour, weekday"""
+    )
 
-    c = sqlite.db_cursor
-    c.execute(sql)
-    data = c.fetchall()
+    res = list(db.execute(statement))
 
     days = {0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday"}
 
-    # Convert integer to weekday and return list shifted by one day, so monday is first, saturday is last.
-    data = [(x[0], days[int(x[1])], x[2]) for x in data]
+    # TODO which one makes more sense!
+    # data = []
+    # for x in res:
+    #     data.append((x[0]+ ":00", days[int(x[1])], x[2]))
+    # return {"data": data}
+
+    hour = []
+    day = []
+    messages = []
+    for x in res:
+        hour.append(x[0] + ":00")
+        day.append(days[int(x[1])])
+        messages.append(x[2])
+    return {"hour": hour, "day": day, "messages": messages}
+
     # Resort data so monday is the first day of the week, instead of sunday.
-    return sorted(data, key=lambda x: sort_weekday(x[1]))
+    # return sorted(data, key=lambda x: sort_weekday(x[1]))

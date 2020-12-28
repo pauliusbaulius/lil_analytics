@@ -1,10 +1,10 @@
 <html>
 <head>
-<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>lil analytics</title>
     <link href="{{ url_for('static', path='/style.css') }}" rel="stylesheet">
     <link rel="shortcut icon" type="image/jpg" href="{{ url_for('static', path='/favicon.png') }}"/>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
+    <script type="module" src="{{ url_for('static', path='/chartjs-plugin-annotation.min.js') }}"></script>
     <script type="text/javascript" src=""></script>
 </head>
 <body>
@@ -82,8 +82,9 @@
     }
 
     const chartB = async () => {
-        const response = await fetch('/stats/messages-amount-days/?days=' + 14 + '&server_id=' + server_id);
+        const response = await fetch('/stats/messages-by-days/?days=' + 14 + '&server_id=' + server_id);
         const d = await response.json();
+        console.log(d)
         new Chart(document.getElementById("chart-b"), {
             type: 'line',
             data: {
@@ -96,17 +97,34 @@
               ]
             },
             options: {
-              legend: { display: false },
+              legend: { display: true },
               title: {
                 display: true,
                 text: 'amount of messages per day (' + 14 + ' days)'
-              }
+              },
+                plugins: {
+                    annotation: {
+                        annotations: {
+                            average: {
+                                type: 'line',
+                                scaleID: "y",
+                                value: d["average"],
+                                borderColor: 'red',
+                                borderWidth: 2,
+                                label: {
+                                    enabled: true,
+                                    content: 'average'
+                                }
+                            }
+                        }
+                    }
+                }
             }
         });
     }
 
     const chartC = async () => {
-        const response = await fetch('/stats/messages-amount-days/?days=' + 90 + '&server_id=' + server_id);
+        const response = await fetch('/stats/messages-by-days/?days=' + 90 + '&server_id=' + server_id);
         const d = await response.json();
         new Chart(document.getElementById("chart-c"), {
             type: 'line',

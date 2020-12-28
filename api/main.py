@@ -1,5 +1,6 @@
 import datetime
 import os
+import statistics
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException, Security
@@ -13,8 +14,8 @@ from starlette.staticfiles import StaticFiles
 from starlette.status import HTTP_403_FORBIDDEN
 
 from api import crud, models, schemas
+from api.crud import check_existence, get_conditional_where
 from api.database import SessionLocal, engine
-from api.utils import check_existence, get_conditional_where
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -75,20 +76,15 @@ async def get_open_api_endpoint():
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request, db: Session = Depends(get_db)):
-    context = {
-        "request": request,
-        "timestamp": datetime.datetime.utcnow(),
-        "servers": crud.get_servers(db=db)
-    }
+    context = {"request": request, "timestamp": datetime.datetime.utcnow(), "servers": crud.get_servers(db=db)}
     return templates.TemplateResponse("index.html", context)
+
 
 @app.get("/dashboard/{server_id}", response_class=HTMLResponse)
 def dashboard(request: Request, server_id: int, db: Session = Depends(get_db)):
-    context = {
-        "request": request,
-        "server_id": server_id
-    }
+    context = {"request": request, "server_id": server_id}
     return templates.TemplateResponse("dashboard.html", context)
+
 
 """
     SERVER
@@ -244,30 +240,56 @@ def get_reactions_by_id(message_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/charts/server-channel-messages/{server_id}")
-def get_server_channel_messages(server_id: int, after: str = None, db: Session = Depends(get_db)):
+def get_server_channel_messages(server_id: int, sort_by_position: bool = False, db: Session = Depends(get_db)):
     """
-    Get channels and their total messages for a given server.
+    Queries total messages for each channel for given server_id.
+    Returns dictionary of labels and data for chart.js..
+
+        Parameters:
+            server_id: Discord server/guild id.
+            sort_by_position: Default will sort channels by message amount, True will sort by their position in guild.
+            db: Database session.
+        Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>]}
     """
-    # TODO sort by channel position or message count, pass sort ENUM!
     if check_existence(db=db, server_id=server_id):
-        return crud.get_server_channel_messages(server_id=server_id, after=after, db=db)
+
+        labels = []
+        data = []
+        positions = []
+
+        query = db.query(models.Channel).filter_by(server_id=server_id, is_deleted=0).all()
+        for channel in query:
+            labels.append(channel.name)
+            positions.append(channel.position)
+            # Count amount of messages.
+            data.append(db.query(models.Message).filter_by(channel_id=channel.id, is_deleted=0).count())
+
+        if sort_by_position:
+            positions, labels, data = zip(*sorted(zip(positions, labels, data)))
+            return {"labels": labels, "data": data}
+        else:
+            data, labels = zip(*sorted(zip(data, labels)))
+            return {"labels": labels[::-1], "data": data[::-1]}
 
 
 @app.get("/stats/server-total-messages/{server_id}")
-def get_server_total_messages(server_id: int, after: str = None, db: Session = Depends(get_db)):
+def get_server_total_messages(server_id: int, db: Session = Depends(get_db)):
+    """"""
     if check_existence(db=db, server_id=server_id):
-        return crud.get_server_total_messages(server_id=server_id, after=after, db=db)
+        messages = db.query(models.Message).filter_by(server_id=server_id, is_deleted=0).count()
+        deleted = db.query(models.Message).filter_by(server_id=server_id, is_deleted=1).count()
+        return {"server_id": server_id, "total_messages": messages, "total_deleted": deleted}
 
 
 @app.get("/stats/server/{server_id}")
 def get_server_stats(server_id: int, db: Session = Depends(get_db)):
+    """"""
     if check_existence(db=db, server_id=server_id):
-        return crud.get_server_stats(server_id=server_id, db=db)
-
-
-"""
-    WIP
-"""
+        # TODO add more fields to server like url, voice channels, whatever else
+        server = db.query(models.Server).filter_by(id=server_id).first()
+        owner = db.query(models.User).filter_by(id=server.owner_id).first()
+        return {"server_id": server_id, "name": server.name, "owner_name": owner.username}
 
 
 @app.get("/stats/messages-amount/")
@@ -301,7 +323,7 @@ def get_messages_total_days(
         return {"result": query.count()}
 
 
-@app.get("/stats/messages-amount-days")
+@app.get("/stats/messages-by-days/")
 def get_messages_amount_days(
     days: int, server_id: int, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db)
 ):
@@ -316,49 +338,169 @@ def get_messages_amount_days(
             days: Positive amount of days, 10 for past 10 days, 1 for today. Maximum of 90.
             db: Database session.
         Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>], "average": <number>, "median": <number>}
+    """
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
+        crud.get_messages_amount_days(server_id=server_id, channel_id=channel_id, user_id=user_id, days=days, db=db)
+
+
+@app.get("/stats/messages-by-weekday/")
+def get_messages_by_weekday(
+    server_id: int, days: int = -1, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db)
+):
+    """
+    Returns messages by weekday for server, channel, user or user in a channel.
+
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id: Discord user id.
+            days: Amount of days to query. Default is all. Negative will query all. Minimum is 2 days!
+            db: Database session.
+        Returns:
             {"labels": [<channel names>], "data": [<amount of messages>]}
     """
-    # TODO calculate average, mean and append to return json COUNT DELETED? avg with del, avg without
-    # TODO same function for weekdays! so u get MO, TU,...
     if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
-        if days > 90 or days < 0:
-            days = 90
-
-        # 0 should be treated as today!
-        if days == 0:
-            days = 1
-
-        statement = text(
-            f"""SELECT DATE(date_utc), COUNT(DATE(date_utc)) 
-                             FROM message
-                             WHERE {get_conditional_where(server_id, channel_id, user_id)} AND is_deleted == 0
-                             GROUP BY DATE(date_utc) 
-                             ORDER BY DATE(date_utc) DESC
-                             LIMIT {days + 1}"""
+        return crud.get_messages_by_weekday(
+            db=db, server_id=server_id, channel_id=channel_id, days=days, user_id=user_id
         )
-        res = list(db.execute(statement))
 
-        labels = []
-        data = []
 
-        # Query returns messages for days that messages exist, so you will get gaps like
-        # ('2020-12-30', 300), ('2020-12-20', 100). This leaves 10 days gap and gets another 8 days
-        # from the past. We want to fill those gaps with 0 messages as ('2020-12-29', 0)...
-        # This loop will iterate list of results, calculate time delta and fill gaps with new dates and 0 messages!
-        # Return is then limited to passed amount of days, since filled list may contain a lot more.
-        for i in range(len(res) - 1):
-            x = datetime.date.fromisoformat(res[i][0])
-            y = datetime.date.fromisoformat(res[i + 1][0])
-            delta = x - y
-            if delta.days > 1:
-                for i in range(delta.days):
-                    new_date = x - datetime.timedelta(days=i)
-                    labels.append(str(new_date))
-                    data.append(0)
-            else:
-                labels.append(res[i][0])
-                data.append(res[i][1])
-        labels = labels[:days]
-        data = data[:days]
-        # Reverse data to get from oldest to newest date.
-        return {"labels": labels[::-1], "data": data[::-1]}
+@app.get("/stats/messages-growth/")
+def get_server_message_growth(
+    server_id: int, days: int = 7, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db)
+):
+    """
+    Returns accumulated list of message growth for server, channel, user or user in channel per day.
+    Uses the function above to get message counts per day and then accumulates them. So day 2 will have count for day 2
+    and count of day 1. Day 3 will have day 2 + day 1...
+
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id: Discord user id.
+            days: Positive amount of days, 10 for past 10 days, 0/1 for today. Maximum of 90.
+                  Negative numbers return 90 days. Default is 7 days.
+            db: Database session.
+        Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>]}
+    """
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
+        return crud.get_messages_growth_days(
+            db=db, server_id=server_id, channel_id=channel_id, user_id=user_id, days=days
+        )
+
+
+@app.get("/stats/messages-growth-months/")
+def get_server_message_growth_months(
+    server_id: int, months: int = 6, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db)
+):
+    """
+    Returns a list of accumulative values for server/channel/user/user in a channel for a given amount of months.
+    Amount of months can be specified. -1 returns all months since creation of the server (if messages are indexed).
+
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id: Discord user id.
+            months: Positive amount of months. 0 or negative number will query all data!
+                    Default is 6 months.
+            db: Database session.
+        Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>]}
+    """
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
+        return crud.get_messages_growth_months(
+            db=db, server_id=server_id, channel_id=channel_id, user_id=user_id, months=months
+        )
+
+
+@app.get("/stats/messages-by-hour/")
+def get_server_messages_by_hour(
+    server_id: int, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db)
+):
+    """
+    Calculates total amount messages by hour of day 00:00-23:00. Returns a dictionary of labels and according values.
+    Queries all messages, does not calculate average or median!
+
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id: Discord user id.
+            db: Database session.
+        Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>]}
+    """
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
+        return crud.get_messages_by_hour(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id)
+
+
+@app.get("/stats/user-most-active/")
+def get_user_most_active(
+    server_id: int, days: int = -1, amount: int = 5, channel_id: int = None, db: Session = Depends(get_db)
+):
+    """
+    Return most active users and their total messages for given amount of days.
+    Can specify amount of days and users to query.
+
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            amount: Amount of users to query. Default is 5. Negative will query all.
+            days: Amount of days to query. Default is all. Negative will query all.
+            db: Database session.
+        Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>]}
+    """
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id):
+        return crud.get_user_most_active(db=db, server_id=server_id, channel_id=channel_id, days=days, amount=amount)
+
+
+@app.get("/stats/reactions-today/{server_id}")
+def get_reactions_today(server_id: int, db: Session = Depends(get_db)):
+    """
+    Get reactions given today.
+        Parameters:
+            server_id: Discord server/guild id.
+            db: Database session.
+        Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>]}
+    """
+    if check_existence(db=db, server_id=server_id):
+        return crud.get_reactions_today(db=db, server_id=server_id)
+
+
+@app.get("/stats/reaction-stats/")
+def get_reaction_stats(server_id: int, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db)):
+    """
+    Returns a list of tuples for each reaction given by a user. If channel id is given, returns given reactions
+    for that channel only. Otherwise reactions for all messages in the server.
+
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id: Discord user id.
+            db: Database session.
+        Returns:
+            {"labels": [<channel names>], "data": [<amount of messages>]}
+    """
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
+        return crud.get_reaction_given_counts(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id)
+
+
+@app.get("/stats/heatmap/")
+def get_heatmap(server_id: int, channel_id: int = None, user_id: int = None, db: Session = Depends(get_db)):
+    """
+    Returns a list of tuples (hour, weekday, amount of messages) for each hour and weekday of the week as a map.
+    Considers all messages in the database for this query. Not limited by day.
+    Used to build a heat map of message distribution by hour/weekday.
+        Parameters:
+            server_id: Discord server/guild id.
+            channel_id: Discord channel id.
+            user_id:
+            db: Database session.
+        Returns:
+            TODO
+    """
+    if check_existence(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id):
+        return crud.get_heatmap(db=db, server_id=server_id, channel_id=channel_id, user_id=user_id)
