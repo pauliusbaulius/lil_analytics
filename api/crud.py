@@ -494,15 +494,13 @@ def get_user_most_active(db: Session, server_id: int, amount: int, channel_id: i
     """Returns given amount of users by their messages in the server or channel in descending order.
     Can limit amount of returned users. Passing amount as -1 will return all users.
     """
-    if days == 0:
-        days = 1
 
     if days < 0:
         days = -1
 
     # If user passes days as 0 or below 0, treat it as "query all days".
     date = (
-        f"(SELECT * FROM message WHERE date_utc >= DATETIME ('now', '-{days + 1} days')) message"
+        f"(SELECT * FROM message WHERE date_utc >= DATETIME ('now', '-{days} days')) message"
         if days >= 1
         else "message"
     )
