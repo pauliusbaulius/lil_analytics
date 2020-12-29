@@ -442,7 +442,7 @@ def get_messages_by_hour(db: Session, server_id: int, user_id: int = None, chann
     data = []
 
     for x in res:
-        labels.append(x[0])
+        labels.append(x[0] + ":00")
         data.append(x[1])
 
     return {"labels": labels, "data": data}
@@ -615,13 +615,13 @@ def get_messages_by_weekday(
     data = []
 
     for x in res:
-        labels.append(x[1])
-        data.append(x[0])
+        labels.append(x[0])
+        data.append(x[1])
 
     days = {0: "Sunday", 1: "Monday", 2: "Tuesday", 3: "Wednesday", 4: "Thursday", 5: "Friday", 6: "Saturday"}
 
     # Convert integer to weekday and return list shifted by one day, so monday is first, saturday is last.
-    data = [days[int(x)] for x in data]
+    labels = [days[int(x)] for x in labels]
     if len(data) > 1:
         return {"labels": labels[1:] + [labels[0]], "data": data[1:] + [data[0]]}  # Switch Sunday to back of the list!
     return {"labels": labels, "data": data}
@@ -649,14 +649,27 @@ def get_heatmap(db: Session, server_id: int, channel_id: int = None, user_id: in
     #     data.append((x[0]+ ":00", days[int(x[1])], x[2]))
     # return {"data": data}
 
-    hour = []
-    day = []
-    messages = []
-    for x in res:
-        hour.append(x[0] + ":00")
-        day.append(days[int(x[1])])
-        messages.append(x[2])
-    return {"hour": hour, "day": day, "messages": messages}
+    # hour = []
+    # day = []
+    # messages = []
+    # for x in res:
+    #     hour.append(x[0] + ":00")
+    #     day.append(days[int(x[1])])
+    #     messages.append(x[2])
+    # return {"hour": hour, "day": day, "messages": messages}
+    #
 
+    # x = []
+    # y = []
+    # r = []
+    # for i in res:
+    #     x.append(int(i[0]))
+    #     y.append(int(i[1]))
+    #     r.append(int(i[2]/500))
+    # return {"x": x, "y": y, "r": r}
+    data = []
+    for i in res:
+        data.append({"x": days[int(i[1])], "y": i[0] + ":00", "heat": i[2]})
+    return data
     # Resort data so monday is the first day of the week, instead of sunday.
     # return sorted(data, key=lambda x: sort_weekday(x[1]))

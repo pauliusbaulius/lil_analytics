@@ -7,6 +7,10 @@
     <script type="module" src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
     <script type="module" src="{{ url_for('static', path='/chartjs-plugin-annotation.min.js') }}"></script>
     <script type="text/javascript" src=""></script>
+
+    <script src="https://cdn.anychart.com/releases/8.7.1/js/anychart-core.min.js"></script>
+    <script src="https://cdn.anychart.com/releases/8.7.1/js/anychart-heatmap.min.js"></script>
+
 </head>
 <body>
     <h1>lil analytics dashboard</h1>
@@ -15,16 +19,20 @@
     <p>total messages: <strong id="statA"></strong> deleted*: <strong id="statAdeleted"></strong></p>
     <p class="hint">*deleted messages are counted since bot join date, total messages are indexed including the past!</p>
     <p>messages today: <strong id="statC"></strong></p>
-    <!--<p>most active user today: #TODO</p>
-    <p>most active channel today: #TODO</p>-->
+    <p>most active user today: <strong id="statD"></strong></p>
 
-    <!-- Charts go in this div. -->
-    <div class="grid-canvas">
-        <canvas id="chart-b"></canvas>
-        <canvas id="chart-c"></canvas>
-        <canvas id="chart-a"></canvas>
-        <canvas id="chart-d"></canvas>
-    </div>
+    <canvas id="chart-b"></canvas>
+    <canvas id="chart-c"></canvas>
+    <canvas id="chart-a"></canvas>
+    <canvas id="chart-g"></canvas>
+    <canvas id="chart-d"></canvas>
+    <canvas id="chart-e"></canvas>
+    <canvas id="chart-f"></canvas>
+    <canvas id="chart-h"></canvas>
+    <canvas id="chart-i"></canvas>
+    <div id="heatmap"></div>
+
+
 
     <!-- TODO select for user and channel, should set channel_id and user_id!. graphs will generate on select. -->
     <select style="display: none" onchange="generateUserStats(this.value)">
@@ -58,6 +66,14 @@
         document.getElementById("statC").textContent=d["data"][0]
     }
 
+
+    const statD = async () => {
+        const response = await fetch('/stats/user-most-active/?days=2&amount=1&server_id=' + server_id);
+        const d = await response.json();
+        console.log(d)
+        document.getElementById("statD").textContent=d["labels"]
+    }
+
     const chartA = async () => {
         const response = await fetch('/charts/server-channel-messages/' + server_id);
         const dataChartA = await response.json(); //extract JSON from the http response
@@ -73,6 +89,7 @@
               ]
             },
             options: {
+                animation: false,
               legend: { display: false },
               title: {
                 display: true,
@@ -97,7 +114,8 @@
               ]
             },
             options: {
-              legend: { display: true },
+                animation: false,
+              legend: { display: false },
               title: {
                 display: true,
                 text: 'amount of messages per day (' + 14 + ' days)'
@@ -121,14 +139,152 @@
               ]
             },
             options: {
-              legend: { display: false },
-              title: {
-                display: true,
-                text: 'amount of messages per day (' + 90 + ' days)'
+                animation: false,
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'amount of messages per day (' + 90 + ' days)'
               }
             }
         });
     }
+
+    const chartD = async () => {
+        const response = await fetch('/stats/messages-growth/?days=' + 30 + '&server_id=' + server_id);
+        const d = await response.json();
+        new Chart(document.getElementById("chart-d"), {
+            type: 'line',
+            data: {
+              labels: d["labels"],
+              datasets: [
+                {
+                  label: "# of messages",
+                  data: d["data"]
+                }
+              ]
+            },
+            options: {
+                animation: false,
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'message growth for last 30 days'
+                }
+            }
+        });
+    }
+
+    const chartE = async () => {
+        const response = await fetch('/stats/messages-growth-months/?months=' + 12 + '&server_id=' + server_id);
+        const d = await response.json();
+        new Chart(document.getElementById("chart-e"), {
+            type: 'line',
+            data: {
+              labels: d["labels"],
+              datasets: [
+                {
+                  label: "# of messages",
+                  data: d["data"]
+                }
+              ]
+            },
+            options: {
+                animation: false,
+                legend: { display: false },
+                title: {
+                    display: true,
+                    text: 'message growth for last ' + d["labels"].length + ' months'
+                }
+            }
+        });
+    }
+
+    const chartF = async () => {
+        const response = await fetch('/stats/messages-by-hour/?server_id=' + server_id);
+        const d = await response.json();
+        new Chart(document.getElementById("chart-f"), {
+            type: 'line',
+            data: {
+                labels: d["labels"],
+                datasets: [
+                    {
+                        label: "# of messages",
+                        data: d["data"]
+                    }
+                ]
+            },
+            options: {
+                animation: false,
+                legend: {display: false},
+                title: {
+                    display: true,
+                    text: 'messages by hour all time (utc)'
+                }
+            }
+        });
+    }
+
+    const chartG = async () => {
+        const response = await fetch('/stats/user-most-active/?server_id=' + server_id + '&amount=30');
+        const d = await response.json();
+        new Chart(document.getElementById("chart-g"), {
+            type: 'horizontalBar',
+            data: {
+                labels: d["labels"],
+                datasets: [
+                    {
+                        label: "# of messages",
+                        data: d["data"]
+                    }
+                ]
+            },
+            options: {
+                animation: false,
+                legend: {display: false},
+                title: {
+                    display: true,
+                    text: d["labels"].length + ' most active users all time'
+                }
+            }
+        });
+    }
+
+    const chartH = async () => {
+        const response = await fetch('/stats/messages-by-weekday/?server_id=' + server_id);
+        const d = await response.json();
+        new Chart(document.getElementById("chart-h"), {
+            type: 'line',
+            data: {
+                labels: d["labels"],
+                datasets: [
+                    {
+                        label: "# of messages",
+                        data: d["data"]
+                    }
+                ]
+            },
+            options: {
+                animation: false,
+                legend: {display: false},
+                title: {
+                    display: true,
+                    text: 'messages by weekday all time'
+                }
+            }
+        });
+    }
+
+    const chartI = async () => {
+      };
+
+    anychart.onDocumentReady(async function () {
+        const response = await fetch('/stats/heatmap/?server_id=' + server_id);
+        const d = await response.json();
+        chart = anychart.heatMap(d);
+        chart.title("total messages by weekday and hour");
+        chart.container("heatmap");
+        chart.draw();
+      });
 
     <!-- FIXME no idea how to make proper "live" dashboard without permanent 15s sleep loop. -->
     async function showLiveDashboard(event) {
@@ -136,9 +292,18 @@
             statA()
             statB()
             statC()
+            statD()
+
             chartA()
             chartB()
             chartC()
+            chartD()
+            chartE()
+            chartF()
+            chartG()
+            chartH()
+            chartI()
+
             await timer(15000)
         }
     }
