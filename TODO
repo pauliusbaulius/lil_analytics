@@ -1,9 +1,9 @@
 API:
 - mean/avg lines for messages per day
 - add mean/avg bars to total messages per channel
-- heatmap of message amount/hour/weekday for all time
-- breakdown of messages per weekday for 14/30/90/all days
-- most active user stat name/messages
++ heatmap of message amount/hour/weekday for all time
++ breakdown of messages per weekday for 14/30/90/all days
++ most active user stat name/messages
 - most active channel stat name/messages
 - reactions by amount, sorted max to low.
 - top 3 reactions today

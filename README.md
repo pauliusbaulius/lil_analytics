@@ -42,6 +42,7 @@ You can check master branch to find the old version, which will be kept as an ar
 - Discord.py bot sniffs information and throws it to api.
 - Makefile(the OG Action) to build, lint, clean code.
 - Chart.js for dashboard graphs.
+- AnyChart.js for heatmap, since Chart.js lacks that...
 
 
 ## TODO
