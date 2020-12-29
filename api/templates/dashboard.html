@@ -68,7 +68,7 @@
 
 
     const statD = async () => {
-        const response = await fetch('/stats/user-most-active/?days=2&amount=1&server_id=' + server_id);
+        const response = await fetch('/stats/user-most-active/?days=1&amount=1&server_id=' + server_id);
         const d = await response.json();
         document.getElementById("statD").textContent=d["labels"]
         document.getElementById("statE").textContent=d["data"]
