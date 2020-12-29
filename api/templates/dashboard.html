@@ -19,7 +19,7 @@
     <p>total messages: <strong id="statA"></strong> deleted*: <strong id="statAdeleted"></strong></p>
     <p class="hint">*deleted messages are counted since bot join date, total messages are indexed including the past!</p>
     <p>messages today: <strong id="statC"></strong></p>
-    <p>most active user today: <strong id="statD"></strong> with <strong id="statE"></strong> messages.</p>
+    <p>most active user today: <strong id="statD"></strong></p>
 
     <canvas id="chart-b"></canvas>
     <canvas id="chart-c"></canvas>
@@ -71,7 +71,6 @@
         const response = await fetch('/stats/user-most-active/?days=1&amount=1&server_id=' + server_id);
         const d = await response.json();
         document.getElementById("statD").textContent=d["labels"]
-        document.getElementById("statE").textContent=d["data"]
     }
 
     const chartA = async () => {
